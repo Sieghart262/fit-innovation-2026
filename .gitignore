@@ -1,0 +1,11 @@
+# Dữ liệu BTC – KHÔNG đưa lên GitHub (điều kiện sử dụng dữ liệu)
+01_du-lieu/
+
+# Môi trường Python và file tạm
+.venv/
+__pycache__/
+*.pyc
+
+# Video demo nặng – nộp riêng qua cổng của BTC
+05_video-demo/*.mp4
+05_video-demo/*.mov
