@@ -17,7 +17,7 @@ Nguyên nhân sai lệch đề bài nêu: chênh lệch độ khó đề giữa 
 
 | # | Giải pháp | Làm gì | Đầu ra bắt buộc |
 |---|---|---|---|
-| 1 | Phát hiện lớp học phần bất thường | Với mỗi lớp: điểm TB lệch so với mặt bằng ngành/khóa (Z-score, p-value); σ quá nhỏ (σ→0); tỷ lệ điểm A [8,5–10] vượt ngưỡng (vd >60%); điểm môn không tương quan với năng lực nền của SV | Bảng xếp hạng lớp nghi vấn + **Anomaly Score 0.0–1.0** + nhãn `HIGH_INFLATION` / `UNUSUALLY_STEEP` / `SUSPICIOUS_DISTRIBUTION` |
+| 1 | Phát hiện lớp học phần bất thường | Với mỗi lớp: điểm TB lệch so với mặt bằng ngành/khóa (Z-score, p-value); σ quá nhỏ (σ→0); tỷ lệ điểm A [8,5–10] vượt ngưỡng (vd >60%); điểm môn không tương quan với năng lực nền của SV | Bảng xếp hạng lớp nghi vấn + **Anomaly Score 0.0–1.0** + nhãn `HIGH_INFLATION` (lạm phát điểm cao) / `UNUSUALLY_STEEP` (điểm bị ép quá thấp) / `SUSPICIOUS_DISTRIBUTION` (phân phối biến dạng) |
 | 2 | Hiệu chỉnh điểm | Chọn/kết hợp: (a) Z-score theo lớp `Z = (X − μc)/σc`; (b) trọng số chiết khấu 0<αc≤1, αc giảm khi Anomaly Score tăng; (c) hồi quy/ML dự báo điểm kỳ vọng X̂ từ môn cơ sở ngành, nếu \|X − X̂\| vượt khoảng tin cậy 95% → `REVIEW_REQUIRED` + đề xuất Adjusted_Score | Bảng điểm **Adjusted_Score / Normalized_GPA** |
 | 3 | Phân loại năng lực thực chất | Tính **TCI** cho từng SV từ dữ liệu GP2 | Danh sách phân loại + **báo cáo giải thích (Explainable AI)** + **dashboard/Web API** biểu đồ phân phối Trước/Sau |
 
