@@ -79,6 +79,7 @@ def tinh_nang_luc(d: pd.DataFrame, cfg: ch.CauHinh) -> tuple[pd.DataFrame, float
     # sẽ trừ thiếu phần giỏi/yếu thật của SV và làm lớp có SV giỏi thật bị nghi oan.
     d["ability"] = np.where(du_lop, tong_khac / (dem_khac + cfg.co_rut_nang_luc), np.nan)
     d["ability_raw"] = np.where(du_lop, tong_khac / dem_khac.where(dem_khac > 0), np.nan)
+    d["so_lop_khac"] = dem_khac  # Giải pháp 2 dùng để tính độ rộng khoảng tin cậy điểm kỳ vọng
 
     m = base & d["ability"].notna()
     b = float(np.polyfit(d.loc[m, "ability"], d.loc[m, "zc"], 1)[0]) if m.sum() > 30 else 0.0
