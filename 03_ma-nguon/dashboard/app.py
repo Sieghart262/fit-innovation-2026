@@ -256,8 +256,9 @@ def trang_lop(kq: dict, vai_tro: str, khoa: str = "") -> None:
         st.altair_chart(bieu_do_nhan(dem), width="stretch", key=f"{khoa}bd_nhan")
     with phai:
         st.subheader("Ý nghĩa của từng kết luận")
-        for _, d in dem.iterrows():
-            st.markdown(f"**{d['Kết luận']}** · {d['Ý nghĩa']}")
+        with st.expander("Xem ý nghĩa 8 kết luận"):  # thu gọn cho trang bớt chữ, cần thì bấm mở
+            for _, d in dem.iterrows():
+                st.markdown(f"**{d['Kết luận']}** · {d['Ý nghĩa']}")
 
     if vai_tro == CONG_KHAI:
         gd.ghi_chu("Chế độ công khai chỉ hiện số liệu tổng hợp. Danh sách từng lớp chỉ vai trò Nhà trường xem được.")
@@ -411,11 +412,18 @@ def _thoi_gian(tt: dict | None) -> str:
 
 
 def khung_reset(co_du_lieu: bool) -> None:
-    """Nút Reset có bước xác nhận: cất kết quả đang dùng vào lịch sử rồi làm trống dashboard."""
-    st.subheader("Bắt đầu lại từ đầu")
+    """Nút Reset có bước xác nhận: cất kết quả đang dùng vào lịch sử rồi làm trống dashboard.
+
+    Đặt trong khung thu gọn (ít dùng); khung tự mở khi đang chờ xác nhận để không giấu câu hỏi.
+    """
     if not co_du_lieu:
-        gd.ghi_chu("Dashboard đang trống. Tải file điểm lên ở bên dưới để tạo dashboard mới.")
         return
+    with st.expander("Reset dashboard (bắt đầu lại từ đầu)", expanded=bool(st.session_state.get("hoi_reset"))):
+        _noi_dung_reset()
+
+
+def _noi_dung_reset() -> None:
+    """Phần bên trong khung Reset: giải thích, nút Reset và bước xác nhận."""
     gd.ghi_chu("Reset sẽ làm trống dashboard cho mọi người xem. Kết quả hiện tại không bị mất: "
                "nó được cất vào mục Lịch sử phân tích, mở lại hoặc tải về được.")
     if not st.session_state.get("hoi_reset"):
@@ -497,13 +505,14 @@ def trang_du_lieu_moi(co_du_lieu: bool) -> None:
         khung_du_lieu_mau()
 
     st.subheader("Phân tích file điểm mới")
-    c = st.columns(3, gap="large")
-    c[0].markdown("**Bước 1 · Chuẩn bị file**\n\nFile CSV có đủ 19 cột, cùng tên cột như file điểm gốc. "
-                  "Tải file mẫu bên dưới để xem tên cột.")
-    c[1].markdown("**Bước 2 · Tải file lên và chọn cách phân tích**\n\nKéo thả file vào ô bên dưới, hoặc bấm *Upload*.")
-    c[2].markdown("**Bước 3 · Bấm Phân tích**\n\nChờ khoảng 30 giây. Dashboard tự chuyển sang kết quả mới.")
-    st.download_button("Tải file mẫu (chỉ có dòng tên cột)", (",".join(cf.COT_BAT_BUOC) + "\n").encode("utf-8-sig"),
-                       "mau_du_lieu_diem.csv", "text/csv")
+    with st.expander("Hướng dẫn tải file"):  # thu gọn cho trang bớt chữ
+        c = st.columns(3, gap="large")
+        c[0].markdown("**Bước 1 · Chuẩn bị file**\n\nFile CSV có đủ 19 cột, cùng tên cột như file điểm gốc. "
+                      "Tải file mẫu bên dưới để xem tên cột.")
+        c[1].markdown("**Bước 2 · Tải file lên và chọn cách phân tích**\n\nKéo thả file vào ô bên dưới, hoặc bấm *Upload*.")
+        c[2].markdown("**Bước 3 · Bấm Phân tích**\n\nChờ khoảng 30 giây. Dashboard tự chuyển sang kết quả mới.")
+        st.download_button("Tải file mẫu (chỉ có dòng tên cột)", (",".join(cf.COT_BAT_BUOC) + "\n").encode("utf-8-sig"),
+                           "mau_du_lieu_diem.csv", "text/csv")
     tep = st.file_uploader("File điểm (CSV)", type="csv")
     co_the_gop = co_du_lieu and kho.file_du_lieu(KET_QUA) is not None
     lua_chon = [RIENG, GOP] if co_the_gop else [RIENG]
@@ -618,10 +627,10 @@ def thong_tin_thanh_ben(kq: dict) -> None:
             st.caption(f"{tt.get('ten', '–')} · phân tích lúc {_thoi_gian(tt)}")
         if "lop" in kq:
             st.caption(f"{gd.so(len(kq['sv']))} sinh viên · {gd.so(len(kq['lop']))} lớp học phần")
-        st.markdown("## Các mức năng lực")
-        for muc in ch3.THU_TU_MUC:
-            st.markdown(f"{gd.huy_hieu_muc(muc)}<div class='ghi-chu' style='margin:0.1rem 0 0.55rem 0.2rem'>"
-                        f"{gd.MUC_VIET[muc][1]}</div>", unsafe_allow_html=True)
+        with st.expander("Các mức năng lực"):  # thu gọn cho thanh bên bớt chữ
+            for muc in ch3.THU_TU_MUC:
+                st.markdown(f"{gd.huy_hieu_muc(muc)}<div class='ghi-chu' style='margin:0.1rem 0 0.55rem 0.2rem'>"
+                            f"{gd.MUC_VIET[muc][1]}</div>", unsafe_allow_html=True)
 
 
 def main() -> None:
