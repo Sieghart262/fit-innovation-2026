@@ -14,9 +14,10 @@ def _gpa(dd: pd.DataFrame, cot_diem: str) -> pd.DataFrame:
     Trả về:
         Bảng mỗi SV: gpa, so_tc, so_mon.
     Vì sao cần: SV học lại một môn có nhiều dòng; lấy lần cao nhất để không đếm tín chỉ hai lần
-    (giả định của đội – cần đối chiếu quy chế NEU).
+    (giả định của đội – cần đối chiếu quy chế NEU). Lượt vắng thi (HP = 0, Thi trống/0) không
+    tính – cùng quy ước với Giải pháp 1 và Giải pháp 3.
     """
-    co = dd[dd[cot_diem].notna() & dd["credits"].notna()]
+    co = dd[dd["valid"] & dd[cot_diem].notna() & dd["credits"].notna()]
     cao_nhat = co.sort_values(cot_diem).drop_duplicates(["student", "course"], keep="last")
     g = cao_nhat.assign(_tich=cao_nhat[cot_diem] * cao_nhat["credits"]).groupby("student")
     return pd.DataFrame({"gpa": g["_tich"].sum() / g["credits"].sum(),

@@ -27,7 +27,8 @@ COT_PHAN_LOAI = {
     "student": "Mã SV", "so_mon": "Số môn", "so_tc": "Số TC", "GPA4_goc": "GPA thang 4 danh nghĩa",
     "muc_truoc": "Mức theo GPA danh nghĩa", "TCI": "TCI", "muc_sau": "Mức theo TCI", "chenh": "TCI − GPA",
     "doi_muc": "Thay đổi mức", "do_tin_cay": "Độ tin cậy", "so_mon_hieu_chinh": "Số môn bị hiệu chỉnh",
-    "so_mon_review": "Số môn REVIEW_REQUIRED", "giai_thich": "Giải thích",
+    "so_mon_review": "Số môn REVIEW_REQUIRED", "so_luot_vang_thi": "Số lượt vắng thi (không tính)",
+    "giai_thich": "Giải thích",
 }
 
 
@@ -117,6 +118,8 @@ def ghi_ket_qua(kq: dict, kc: pd.DataFrame | None, cfg: ch3.CauHinhGP3, thu_muc:
     }
     if kc is not None:
         bang["kiem_chung_gp3.csv"] = kc
+    else:  # kết quả chính vừa được tạo lại → bảng kiểm chứng cũ không còn khớp, xóa để khỏi đọc nhầm
+        (thu_muc / "kiem_chung_gp3.csv").unlink(missing_ok=True)
     ra = []
     for ten, b in bang.items():
         p = thu_muc / ten
@@ -140,18 +143,21 @@ def ghi_bao_cao(kq: dict, kc: pd.DataFrame | None, hinh: dict, thu_muc: Path) ->
         "so_sv_truoc": sv["muc_truoc"].value_counts().reindex(ch3.THU_TU_MUC, fill_value=0).values,
         "so_sv_sau": sv["muc_sau"].value_counts().reindex(ch3.THU_TU_MUC, fill_value=0).values})
     tom_tat = pd.DataFrame([
-        ("Số SV được phân loại", len(sv)),
+        ("Số SV được phân loại", int(sv["TCI"].notna().sum())),
+        ("SV chưa đủ dữ liệu (không có môn nào có điểm hợp lệ)", int(sv["TCI"].isna().sum())),
+        ("SV có lượt vắng thi không được tính", int(sv["so_luot_vang_thi"].gt(0).sum())),
         ("SV đổi mức", int(sv["doi_muc"].ne("Giữ nguyên").sum())),
         ("– lên mức", int(sv["doi_muc"].eq("Lên mức").sum())),
         ("– xuống mức", int(sv["doi_muc"].eq("Xuống mức").sum())),
         ("SV có ít nhất 1 môn bị hiệu chỉnh", int(sv["so_mon_hieu_chinh"].gt(0).sum())),
-        ("SV độ tin cậy thấp (< 3 môn)", int(sv["do_tin_cay"].eq(ch3.DO_TIN_CAY_THAP).sum())),
+        ("SV độ tin cậy thấp (< 3 môn, gồm cả SV chưa đủ dữ liệu)", int(sv["do_tin_cay"].eq(ch3.DO_TIN_CAY_THAP).sum())),
         ("GPA thang 4 danh nghĩa TB", round(float(sv["GPA4_goc"].mean()), 3)),
         ("TCI TB", round(float(sv["TCI"].mean()), 3)),
     ], columns=["chi_so", "gia_tri"])
     dong = ["# Báo cáo Giải pháp 3 – Phân loại năng lực thực chất (TCI)", "",
             "TCI = trung bình có trọng số tín chỉ của điểm thang 4 quy đổi từ điểm đã hiệu chỉnh (GP2). "
-            "Mức: Advanced ≥ 3,60; Proficient 3,20–<3,60; Intermediate 2,50–<3,20; At-Risk < 2,50.", "",
+            "Mức: Advanced ≥ 3,60; Proficient 3,20–<3,60; Intermediate 2,50–<3,20; At-Risk < 2,50. "
+            "Lượt vắng thi (HP = 0) không tính vào GPA danh nghĩa lẫn TCI.", "",
             "## Tóm tắt", "", bang_markdown(tom_tat, so_le=3), "",
             "## Số SV theo mức", "", bang_markdown(theo_muc), "",
             "## Ma trận chuyển mức (hàng: theo GPA danh nghĩa, cột: theo TCI)", "",

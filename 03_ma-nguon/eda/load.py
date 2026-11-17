@@ -55,8 +55,8 @@ def doan_ky_tu_ngan_cot(duong_dan: Path) -> str:
     for ky_tu in [",", ";", "\t"]:
         try:
             so_cot = pd.read_csv(duong_dan, encoding="utf-8-sig", sep=ky_tu, nrows=0).shape[1]
-        except (pd.errors.ParserError, UnicodeDecodeError):
-            continue
+        except (pd.errors.ParserError, pd.errors.EmptyDataError, UnicodeDecodeError):
+            continue  # ký tự này không đọc được; lỗi thật (nếu có) sẽ được báo rõ ở doc_csv
         if so_cot > so_cot_max:
             tot_nhat, so_cot_max = ky_tu, so_cot
     return tot_nhat
@@ -72,11 +72,22 @@ def doc_csv(duong_dan: Path) -> pd.DataFrame:
     Vì sao cần: BTC ghi file mã hóa UTF-8 có BOM (ký tự ẩn ở đầu file để Excel
     hiểu tiếng Việt). encoding="utf-8-sig" giúp bỏ ký tự ẩn đó, nếu không thì
     tên cột đầu tiên sẽ bị dính ký tự lạ. Ký tự ngăn cột được tự đoán.
+    File rỗng, sai mã hóa hoặc hỏng cấu trúc đều được báo bằng LoiDuLieu với lời
+    giải thích dễ hiểu (quan trọng khi nhà trường tải file mới lên dashboard).
     """
     if not duong_dan.exists():
         raise LoiDuLieu(f"Không tìm thấy file: {duong_dan}")
-    bang = pd.read_csv(duong_dan, encoding="utf-8-sig", dtype=str,
-                       sep=doan_ky_tu_ngan_cot(duong_dan))
+    try:
+        bang = pd.read_csv(duong_dan, encoding="utf-8-sig", dtype=str,
+                           sep=doan_ky_tu_ngan_cot(duong_dan))
+    except pd.errors.EmptyDataError:
+        raise LoiDuLieu(f"File {duong_dan.name} rỗng (không có dòng tiêu đề).") from None
+    except UnicodeDecodeError:
+        raise LoiDuLieu(f"File {duong_dan.name} không phải mã hóa UTF-8. "
+                        "Hãy lưu lại từ Excel với kiểu \"CSV UTF-8\".") from None
+    except pd.errors.ParserError:
+        raise LoiDuLieu(f"File {duong_dan.name} không đọc được dưới dạng CSV "
+                        "(số cột giữa các dòng không đều).") from None
     bang.columns = [chuan_hoa_chu(c) for c in bang.columns]
     return bang
 
@@ -191,6 +202,8 @@ def doc_du_lieu_diem(duong_dan: Path = cf.FILE_DIEM) -> tuple[pd.DataFrame, dict
     """
     bang = doc_csv(duong_dan)
     kiem_tra_ten_cot(bang, cf.COT_BAT_BUOC, duong_dan.name)
+    if bang.empty:
+        raise LoiDuLieu(f"File {duong_dan.name} chỉ có dòng tiêu đề, không có dòng dữ liệu nào.")
     so_cot_goc = bang.shape[1]
 
     # Ô chỉ có khoảng trắng cũng coi là trống. Đếm ô trống TRƯỚC khi chuyển kiểu,

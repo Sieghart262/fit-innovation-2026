@@ -1,8 +1,9 @@
 # Dữ liệu BTC – KHÔNG đưa lên GitHub (điều kiện sử dụng dữ liệu)
 01_du-lieu/
 
-# Nhật ký AI – chỉ giữ trên máy, không đưa lên GitHub
+# Nhật ký AI và hướng dẫn cho Claude – chỉ giữ trên máy, không đưa lên GitHub
 06_quan-ly/nhat-ky-AI.md
+CLAUDE.md
 
 # Môi trường Python và file tạm
 .venv/

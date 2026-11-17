@@ -34,7 +34,9 @@ def tinh_dich_chuyen_lop(kq: pd.DataFrame, ds_moc: dict, d: pd.DataFrame, cfg: C
     """
     cot = ["class_id", "course", "year", "sem", "n", "anomaly_type", "anomaly_score",
            "du_dieu_kien_hieu_chinh", "huong_hieu_chinh", "ref_level", "mean", "ref_mean", "resid_mean"]
-    lop = kq[cot].copy()
+    lop = kq.reindex(columns=cot).copy()  # reindex: thiếu cột nào thì để trống thay vì báo lỗi
+    for c in ["mean", "ref_mean", "resid_mean", "anomaly_score"]:
+        lop[c] = pd.to_numeric(lop[c], errors="coerce")
     lop["du_dieu_kien_hieu_chinh"] = lop["du_dieu_kien_hieu_chinh"].eq(True)
     sd_lop = d[d["valid"]].groupby("class_id")["sd_chuan"].mean()
     lop["sd_lop"] = lop["class_id"].map(sd_lop)

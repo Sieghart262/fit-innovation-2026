@@ -11,6 +11,7 @@ from __future__ import annotations
 import numpy as np
 import pandas as pd
 
+from eda import config as cf
 from . import cau_hinh as ch
 from .quy_trinh import chay_quy_trinh
 
@@ -23,7 +24,25 @@ KICH_BAN = {
     # SV giỏi thật: lớp lệch lên nhưng không có bằng chứng → bình thường hoặc chỉ "cần xem xét"
     "gioi_that": ("SV của lớp giỏi thật: +1,5 ở MỌI lớp họ học", [ch.NORMAL, ch.REVIEW], False),
     "thieu_qua_trinh": ("Chưa nhập CC/KTTX, HP = 0,5 × Thi", [ch.CHUA_DU], False),
+    # Hai kịch bản sửa chính điểm KTTX (HP đổi theo trọng số) → kiểm tra bằng chứng E2 "KTTX lệch Thi đúng chiều"
+    "kttx_rong_tay": ("KTTX chấm rộng tay: KTTX +2,5, HP tăng theo trọng số", [ch.HIGH], True),
+    "kttx_chat": ("KTTX chấm chặt: KTTX −2,5, HP giảm theo trọng số", [ch.STEEP], True),
 }
+
+
+def _trong_so_kttx(d: pd.DataFrame) -> pd.Series:
+    """Trọng số của KTTX trong điểm HP (0–1) cho từng lượt điểm.
+
+    Tham số:
+        d: các lượt điểm (cột weights dạng "10/40/50", year_start, sem).
+    Trả về:
+        Trọng số KTTX; ô không ghi cơ cấu thì lấy theo mốc đổi trọng số (20% trước HK2 2021-22, 40% từ đó).
+    Vì sao cần: khi mô phỏng GV chấm KTTX rộng tay/chặt, điểm HP phải đổi đúng theo trọng số.
+    """
+    ghi = pd.to_numeric(d["weights"].astype(str).str.extract(r"^\d+/(\d+)/\d+$")[0], errors="coerce") / 100
+    moc = cf.MOC_DOI_TRONG_SO[0] * 10 + cf.MOC_DOI_TRONG_SO[1]
+    mac_dinh = pd.Series(np.where(d["year_start"] * 10 + d["sem"] >= moc, 0.4, 0.2), index=d.index)
+    return ghi.fillna(mac_dinh)
 
 
 def cai_bat_thuong(d: pd.DataFrame, kieu: str, cac_lop, rng: np.random.Generator) -> pd.DataFrame:
@@ -59,6 +78,13 @@ def cai_bat_thuong(d: pd.DataFrame, kieu: str, cac_lop, rng: np.random.Generator
             mm = d["class_id"] == cid
             d.loc[mm, ["cc", "kttx"]] = np.nan
             d.loc[mm & d["exam"].notna(), "hp"] = (0.5 * d.loc[mm & d["exam"].notna(), "exam"]).round(1)
+            continue
+        elif kieu in ("kttx_rong_tay", "kttx_chat"):
+            mm = (d["class_id"] == cid) & d["kttx"].notna() & d["hp"].notna() & (d["hp"] > 0)
+            cu = d.loc[mm, "kttx"]
+            moi = np.clip(cu + (2.5 if kieu == "kttx_rong_tay" else -2.5), 0, 10)
+            d.loc[mm, "hp"] = np.clip(d.loc[mm, "hp"] + _trong_so_kttx(d.loc[mm]) * (moi - cu), 0, 10).round(1)
+            d.loc[mm, "kttx"] = moi
             continue
         d.loc[m, "hp"] = np.round(x, 1)
     return d
