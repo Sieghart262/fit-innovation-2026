@@ -582,7 +582,9 @@ def main() -> None:
     ten_tab = ["Tổng quan", "Lớp học phần", "Hiệu chỉnh điểm"]
     if vai_tro == NHA_TRUONG:
         ten_tab += ["Tra cứu sinh viên", "Phân tích dữ liệu mới", "Lịch sử phân tích"]
-    tabs = st.tabs(ten_tab)
+    # key cố định (theo vai trò): không có key thì khi nội dung một tab đổi nhiều (vd bỏ chọn hết
+    # "Kết luận"), Streamlit dựng lại thanh tab và nhảy về tab đầu tiên.
+    tabs = st.tabs(ten_tab, key=f"tab_chinh_{len(ten_tab)}")
     with tabs[0]:
         trang_tong_quan(kq, vai_tro)
     # Viết if/else thường, không viết "a if ... else b": Streamlit tự hiện kết quả của biểu thức

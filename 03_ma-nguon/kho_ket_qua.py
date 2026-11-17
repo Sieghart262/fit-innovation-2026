@@ -19,6 +19,8 @@ from __future__ import annotations
 import json
 import shutil
 import tempfile
+import threading
+import time
 import warnings
 from datetime import datetime
 from pathlib import Path
@@ -37,6 +39,36 @@ THU_MUC_KET_QUA = cf.THU_MUC_GOC / "01_du-lieu" / "ket-qua"
 TEN_THONG_TIN = "thong_tin.json"
 TEN_DU_LIEU = "du_lieu_dau_vao.csv"
 THU_MUC_CON = ["gp1", "gp2", "gp3"]
+
+# Chỉ cho một lần ghi kết quả (phân tích file mới / reset) chạy tại một thời điểm, kể cả khi
+# nhiều người cùng mở dashboard: hai lần ghi chồng lên nhau sẽ xóa/chép đè file của nhau.
+_KHOA_GHI = threading.Lock()
+
+
+def _thu_lai(ham, *args, so_lan: int = 20, cho: float = 0.25, **kwargs):
+    """Gọi ham(*args), thử lại khi Windows báo file đang bị khóa (PermissionError).
+
+    Tham số:
+        ham: thao tác file (đổi tên, xóa, chép...); so_lan: số lần thử tối đa; cho: giây chờ giữa hai lần.
+    Trả về:
+        Kết quả của ham.
+    Vì sao cần: trên Windows, file vừa ghi thường bị phần mềm diệt virus/tìm kiếm, hoặc một người
+    khác đang mở dashboard, giữ trong chốc lát. Xóa hay đổi tên đúng lúc đó sẽ lỗi PermissionError
+    dù dữ liệu không sai; chờ một chút rồi làm lại là được (trước đây người dùng phải tự bấm lại).
+    """
+    for lan in range(so_lan):
+        try:
+            return ham(*args, **kwargs)
+        except PermissionError:
+            if lan == so_lan - 1:
+                raise
+            time.sleep(cho)
+
+
+def _xoa_thu_muc(p: Path) -> None:
+    """Xóa hẳn một thư mục (thử lại khi bị khóa). Không lặng lẽ để sót file như ignore_errors."""
+    if p.exists():
+        _thu_lai(shutil.rmtree, p)
 
 CACH_LENH = "Chạy lệnh run_gp3.py"
 CACH_RIENG = "Tải file lên – phân tích riêng"
@@ -161,25 +193,25 @@ def luu_lich_su(goc: Path, lich_su: Path) -> Path | None:
     if (dich / TEN_THONG_TIN).exists():
         return dich
     tam = lich_su / f".{tt['id']}.dang-luu"
-    shutil.rmtree(tam, ignore_errors=True)
+    _xoa_thu_muc(tam)
     for con in THU_MUC_CON:
         if (goc / con).exists():
-            shutil.copytree(goc / con, tam / con)
+            _thu_lai(shutil.copytree, goc / con, tam / con, dirs_exist_ok=True)
     nguon = file_du_lieu(goc)
     if nguon is not None:
-        shutil.copy2(nguon, tam / TEN_DU_LIEU)
+        _thu_lai(shutil.copy2, nguon, tam / TEN_DU_LIEU)
     tt = {**tt, "file_du_lieu": TEN_DU_LIEU if nguon is not None else ""}
     (tam / TEN_THONG_TIN).write_text(json.dumps(tt, ensure_ascii=False, indent=1), encoding="utf-8")
-    tam.rename(dich)  # đổi tên sau cùng: mục lịch sử chỉ xuất hiện khi đã sao chép xong
+    _thu_lai(tam.rename, dich)  # đổi tên sau cùng: mục lịch sử chỉ xuất hiện khi đã sao chép xong
     return dich
 
 
 def xoa_ket_qua(goc: Path) -> None:
     """Xóa kết quả đang dùng (chỉ các thư mục/tệp do hệ thống tạo, không đụng tệp khác)."""
     for con in THU_MUC_CON:
-        shutil.rmtree(goc / con, ignore_errors=True)
+        _xoa_thu_muc(goc / con)
     for ten in (TEN_THONG_TIN, TEN_DU_LIEU):
-        (goc / ten).unlink(missing_ok=True)
+        _thu_lai((goc / ten).unlink, missing_ok=True)
 
 
 def reset(goc: Path, lich_su: Path) -> Path | None:
@@ -188,8 +220,9 @@ def reset(goc: Path, lich_su: Path) -> Path | None:
     Trả về:
         Thư mục mục lịch sử vừa lưu (None nếu dashboard vốn đã trống).
     """
-    da_luu = luu_lich_su(goc, lich_su)
-    xoa_ket_qua(goc)
+    with _KHOA_GHI:
+        da_luu = luu_lich_su(goc, lich_su)
+        xoa_ket_qua(goc)
     return da_luu
 
 
@@ -237,7 +270,8 @@ def phan_tich_moi(noi_dung: bytes, ten_file: str, gop: bool, goc: Path, lich_su:
     if gop and cu is None:
         raise LoiDuLieu("Chưa có dữ liệu đang dùng (hoặc không tìm thấy file điểm của dữ liệu đang dùng) "
                         "nên không gộp được. Hãy chọn \"Phân tích riêng\".")
-    with tempfile.TemporaryDirectory() as t:
+    # ignore_cleanup_errors: thư mục tạm bị khóa lúc dọn dẹp thì bỏ qua, không làm hỏng lần phân tích đã xong
+    with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as t:
         tam = Path(t)
         moi = tam / "file_moi.csv"
         moi.write_bytes(noi_dung)
@@ -262,12 +296,17 @@ def phan_tich_moi(noi_dung: bytes, ten_file: str, gop: bool, goc: Path, lich_su:
         shutil.copy2(dau_vao, ra / TEN_DU_LIEU)
         tt = ghi_thong_tin(ra, ten, CACH_GOP if gop else CACH_RIENG, TEN_DU_LIEU, tom_tat_kq(kq))
 
-        luu_lich_su(goc, lich_su)        # cất kết quả đang dùng (nếu chưa có trong lịch sử)
-        xoa_ket_qua(goc)
-        goc.mkdir(parents=True, exist_ok=True)
-        for p in ra.iterdir():
-            shutil.move(str(p), str(goc / p.name))
-    luu_lich_su(goc, lich_su)            # lưu luôn kết quả mới vào lịch sử
+        with _KHOA_GHI:
+            luu_lich_su(goc, lich_su)        # cất kết quả đang dùng (nếu chưa có trong lịch sử)
+            xoa_ket_qua(goc)
+            goc.mkdir(parents=True, exist_ok=True)
+            # Chép (không "move"): chép làm lại được an toàn khi bị khóa giữa chừng; thư mục tạm tự dọn sau
+            for p in ra.iterdir():
+                if p.is_dir():
+                    _thu_lai(shutil.copytree, p, goc / p.name, dirs_exist_ok=True)
+                else:
+                    _thu_lai(shutil.copy2, p, goc / p.name)
+            luu_lich_su(goc, lich_su)        # lưu luôn kết quả mới vào lịch sử
     return {**tt, **thong_tin_gop}
 
 
