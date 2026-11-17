@@ -4,6 +4,7 @@
 # Nhật ký AI và hướng dẫn cho Claude – chỉ giữ trên máy, không đưa lên GitHub
 06_quan-ly/nhat-ky-AI.md
 CLAUDE.md
+.claude/
 
 # Môi trường Python và file tạm
 .venv/
