@@ -14,3 +14,9 @@ __pycache__/
 # Video demo nặng – nộp riêng qua cổng của BTC
 05_video-demo/*.mp4
 05_video-demo/*.mov
+
+# Báo cáo PDF sinh ra từ số liệu thật – chỉ giữ trên máy
+04_bao-cao/*.pdf
+04_bao-cao/bao_cao.html
+04_bao-cao/hinh/
+04_bao-cao/so_lieu.json
