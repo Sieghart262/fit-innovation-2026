@@ -4,7 +4,12 @@ Phân quyền (quyết định của đội):
     - Công khai: chỉ số liệu tổng hợp; ô nào dưới 5 SV hiện "<5"; không có bảng từng lớp
       (từ mã lớp có thể suy ra giảng viên) và không tra cứu từng SV.
     - Nhà trường: xem hết, tra cứu từng SV, tải danh sách phân loại, phân tích file điểm mới.
-      Cần mật khẩu đặt trong biến môi trường FIT_MAT_KHAU_NHA_TRUONG (không ghi vào code).
+      Cần mật khẩu đặt trong biến môi trường FIT_MAT_KHAU_NHA_TRUONG (không ghi vào code); trên
+      Streamlit Cloud thì đặt trong mục Secrets.
+
+Bản demo công khai trên Internet (Streamlit Cloud): đặt FIT_BAN_CONG_KHAI = "1" trong Secrets để hiện
+cảnh báo "không tải dữ liệu thật" và nút dùng dữ liệu mẫu (giả). Dữ liệu thật không có trên GitHub
+nên bản này khởi động trống; người xem tự tải file điểm lên hoặc dùng dữ liệu mẫu.
 
 Dữ liệu: đọc kết quả do run_gp3.py ghi ra (mặc định 01_du-lieu/ket-qua/). Đặt biến môi trường
 FIT_KET_QUA để trỏ tới thư mục khác (ví dụ kết quả từ DỮ LIỆU GIẢ khi demo công khai).
@@ -37,11 +42,32 @@ for _p in (THU_MUC_MA, Path(__file__).resolve().parent):
 import bao_cao  # noqa: E402
 import giao_dien as gd  # noqa: E402
 import kho_ket_qua as kho  # noqa: E402
+import tao_du_lieu_gia  # noqa: E402
 from eda import config as cf  # noqa: E402
 from eda.load import LoiDuLieu  # noqa: E402
 from gp1 import cau_hinh as ch1  # noqa: E402
 from gp3 import cau_hinh as ch3  # noqa: E402
 
+def cau_hinh(ten: str, mac_dinh: str = "") -> str:
+    """Đọc một thiết lập: biến môi trường trước, rồi tới mục Secrets của Streamlit Cloud.
+
+    Tham số:
+        ten: tên thiết lập (vd FIT_MAT_KHAU_NHA_TRUONG); mac_dinh: giá trị khi không đặt.
+    Trả về:
+        Giá trị dạng chuỗi.
+    Vì sao cần: chạy trên máy thì đặt bằng biến môi trường (file .bat); trên Streamlit Cloud không
+    đặt được biến môi trường mà phải dùng Secrets. Mật khẩu không bao giờ nằm trong code.
+    """
+    gia_tri = os.environ.get(ten)
+    if gia_tri is not None:
+        return gia_tri
+    try:
+        return str(st.secrets.get(ten, mac_dinh))
+    except Exception:  # noqa: BLE001 – không có file secrets (chạy trên máy) thì dùng mặc định
+        return mac_dinh
+
+
+BAN_CONG_KHAI = cau_hinh("FIT_BAN_CONG_KHAI") == "1"
 KET_QUA = Path(os.environ.get("FIT_KET_QUA", kho.THU_MUC_KET_QUA))
 LICH_SU = Path(os.environ.get("FIT_LICH_SU", kho.thu_muc_lich_su(KET_QUA)))
 NGUONG = cf.NGUONG_NHOM_TOI_THIEU
@@ -410,6 +436,48 @@ def khung_reset(co_du_lieu: bool) -> None:
         st.rerun()
 
 
+@st.cache_data(show_spinner=False)
+def file_diem_mau() -> bytes:
+    """Sinh file điểm GIẢ (1.500 SV, đúng 19 cột như file của BTC) dưới dạng nội dung CSV.
+
+    Trả về:
+        Nội dung file CSV (UTF-8 có BOM). Cùng seed nên lần nào cũng như nhau.
+    Vì sao cần: người xem bản demo công khai có thể chưa có file điểm trong tay; dữ liệu giả
+    là số ngẫu nhiên nên an toàn để công khai.
+    """
+    import argparse
+    import tempfile
+
+    import numpy as np_
+
+    a = argparse.Namespace(so_sv=1500, nhan_lop=1, seed=2026, sach=True, cai_loi=False, phay_thap_phan=False)
+    dong, _ = tao_du_lieu_gia.tao_bang_diem(a, np_.random.default_rng(a.seed))
+    with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as t:
+        f = Path(t) / "Du_lieu_mau_gia.csv"
+        tao_du_lieu_gia.ghi_csv(f, tao_du_lieu_gia.COT_DIEM, dong, ",")
+        return f.read_bytes()
+
+
+def khung_du_lieu_mau() -> None:
+    """Khu vực "Chưa có file?": phân tích ngay dữ liệu mẫu (giả), hoặc tải file mẫu về để thử tải lên."""
+    st.subheader("Chưa có file điểm? Dùng dữ liệu mẫu")
+    gd.ghi_chu("Dữ liệu mẫu là dữ liệu giả, sinh ngẫu nhiên (1.500 sinh viên, đúng 19 cột như file điểm gốc). "
+               "Có thể phân tích ngay, hoặc tải file về rồi thử tải lên ở phần bên dưới.")
+    c = st.columns([1, 1, 3])
+    bam = c[0].button("Phân tích dữ liệu mẫu", type="primary")
+    c[1].download_button("Tải file điểm mẫu (CSV)", file_diem_mau(), "Du_lieu_mau_gia.csv", "text/csv")
+    if bam:
+        with st.spinner("Đang phân tích dữ liệu mẫu (khoảng 30 giây)..."):
+            try:
+                tt = kho.phan_tich_moi(file_diem_mau(), "Dữ liệu mẫu (giả)", False, KET_QUA, LICH_SU)
+                st.session_state["thong_bao"] = (f"Đã phân tích xong dữ liệu mẫu: {gd.so(tt['so_sv'])} sinh viên, "
+                                                 f"{gd.so(tt['so_lop'])} lớp. Dashboard đã chuyển sang kết quả mới.")
+                st.rerun()
+            except Exception as loi:  # noqa: BLE001
+                traceback.print_exc()
+                st.error(f"Không phân tích được dữ liệu mẫu. (Mã lỗi: {type(loi).__name__})")
+
+
 def trang_du_lieu_moi(co_du_lieu: bool) -> None:
     """Trang phân tích dữ liệu mới (chỉ nhà trường): reset, tải file điểm, phân tích riêng hoặc gộp.
 
@@ -425,6 +493,8 @@ def trang_du_lieu_moi(co_du_lieu: bool) -> None:
     else:
         gd.tom_tat("Dashboard đang <b>trống</b>. Tải file điểm lên để tạo dashboard mới.")
     khung_reset(co_du_lieu)
+    if BAN_CONG_KHAI:  # chỉ bản demo công khai: trên máy nhà trường không lỡ tay thay dữ liệu thật bằng dữ liệu giả
+        khung_du_lieu_mau()
 
     st.subheader("Phân tích file điểm mới")
     c = st.columns(3, gap="large")
@@ -522,7 +592,7 @@ def chon_vai_tro() -> str:
                 st.rerun()
             return NHA_TRUONG
         st.info("Đang xem **công khai**: chỉ có số liệu tổng hợp.")
-        mat_khau = os.environ.get("FIT_MAT_KHAU_NHA_TRUONG", "")
+        mat_khau = cau_hinh("FIT_MAT_KHAU_NHA_TRUONG")
         with st.expander("Đăng nhập vai trò Nhà trường"):
             if not mat_khau:
                 st.warning("Chưa đặt mật khẩu (biến môi trường FIT_MAT_KHAU_NHA_TRUONG) nên chưa đăng nhập được.")
@@ -561,6 +631,9 @@ def main() -> None:
     st.title("Phân tích điểm và năng lực thực chất của sinh viên")
     st.markdown('<div class="phu-de">Phát hiện lớp chấm điểm bất thường · Hiệu chỉnh điểm cho công bằng · '
                 'Xếp mức năng lực theo điểm đã hiệu chỉnh</div>', unsafe_allow_html=True)
+    if BAN_CONG_KHAI:
+        st.warning("Đây là bản demo công khai trên Internet. Chỉ tải lên dữ liệu giả hoặc dữ liệu đã được phép "
+                   "công bố. Kết quả sẽ mất khi ứng dụng khởi động lại; khi đó hãy tải file lên lại.")
     vai_tro = chon_vai_tro()
     if "thong_bao" in st.session_state:  # thông báo sau khi reset/phân tích (trang vừa được tải lại)
         st.success(st.session_state.pop("thong_bao"))
@@ -570,6 +643,13 @@ def main() -> None:
     if not co_du_lieu:  # dashboard trống (đã reset, hoặc chưa phân tích lần nào)
         if vai_tro == CONG_KHAI:
             gd.tom_tat("Hiện chưa có dữ liệu phân tích. Dashboard sẽ hiển thị khi nhà trường tải dữ liệu điểm lên.")
+            mau = ", hoặc bấm **Phân tích dữ liệu mẫu** để thử bằng dữ liệu giả" if BAN_CONG_KHAI else ""
+            st.markdown("\n".join([
+                "**Cách tạo kết quả phân tích:**",
+                "1. Ở thanh bên trái, bấm **Đăng nhập vai trò Nhà trường** và nhập mật khẩu.",
+                "2. Mở tab **Phân tích dữ liệu mới**.",
+                f"3. Tải lên file điểm CSV có 19 cột như file điểm gốc rồi bấm **Phân tích**{mau}.",
+                "4. Chờ khoảng 1 phút. Dashboard tự chuyển sang kết quả mới, ai mở cũng xem được."]))
             return
         t = st.tabs(["Phân tích dữ liệu mới", "Lịch sử phân tích"])
         with t[0]:
@@ -582,7 +662,9 @@ def main() -> None:
     ten_tab = ["Tổng quan", "Lớp học phần", "Hiệu chỉnh điểm"]
     if vai_tro == NHA_TRUONG:
         ten_tab += ["Tra cứu sinh viên", "Phân tích dữ liệu mới", "Lịch sử phân tích"]
-    tabs = st.tabs(ten_tab)
+    # key cố định (theo vai trò): không có key thì khi nội dung một tab đổi nhiều (vd bỏ chọn hết
+    # "Kết luận"), Streamlit dựng lại thanh tab và nhảy về tab đầu tiên.
+    tabs = st.tabs(ten_tab, key=f"tab_chinh_{len(ten_tab)}")
     with tabs[0]:
         trang_tong_quan(kq, vai_tro)
     # Viết if/else thường, không viết "a if ... else b": Streamlit tự hiện kết quả của biểu thức
