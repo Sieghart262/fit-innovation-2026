@@ -1,0 +1,8 @@
+# Thư viện để Streamlit Community Cloud cài khi chạy bản demo công khai (giống 03_ma-nguon/requirements.txt).
+# Chạy trên máy thì vẫn cài theo 03_ma-nguon/requirements.txt như hướng dẫn trong README.
+pandas>=2.3.3
+numpy>=2.3.4
+matplotlib>=3.10.7
+scipy>=1.16.3
+scikit-learn>=1.7
+streamlit>=1.50
