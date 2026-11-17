@@ -81,6 +81,20 @@ def tom_tat_kq(kq: dict) -> dict:
             "so_sv_doi_muc": int(sv["doi_muc"].ne("Giữ nguyên").sum())}
 
 
+def tom_tat_tu_file(goc: Path) -> dict:
+    """Đếm lại các con số tóm tắt từ file kết quả (dùng cho kết quả cũ chưa có thong_tin.json)."""
+    try:
+        lop = pd.read_csv(goc / "gp1" / "chi_so_chi_tiet.csv", encoding="utf-8-sig", usecols=["anomaly_type"])
+        hc = pd.read_csv(goc / "gp2" / "hieu_chinh_theo_lop.csv", encoding="utf-8-sig")
+        sv = pd.read_csv(goc / "gp3" / "phan_loai_sinh_vien.csv", encoding="utf-8-sig", usecols=["TCI", "Thay đổi mức"])
+    except (OSError, ValueError):
+        return {}
+    return {"so_sv": int(sv["TCI"].notna().sum()), "so_lop": int(len(lop)),
+            "so_lop_bat_thuong": int(lop["anomaly_type"].isin(ch1.NHAN_BAT_THUONG).sum()),
+            "so_lop_hieu_chinh": int(hc[hc.columns[-1]].ne(0).sum()),
+            "so_sv_doi_muc": int(sv["Thay đổi mức"].ne("Giữ nguyên").sum())}
+
+
 def ghi_thong_tin(goc: Path, ten: str, cach_tao: str, file_du_lieu: str, tom_tat: dict) -> dict:
     """Ghi thong_tin.json cho một bộ kết quả.
 
@@ -141,7 +155,8 @@ def luu_lich_su(goc: Path, lich_su: Path) -> Path | None:
     if tt is None:  # kết quả cũ chưa có thông tin → tạo thông tin từ thời điểm sửa file
         mtime = datetime.fromtimestamp((goc / "gp3" / "phan_loai_sinh_vien.csv").stat().st_mtime)
         tt = {"id": mtime.strftime("%Y%m%d-%H%M%S-000000"), "ten": "Kết quả phân tích trước đây",
-              "thoi_gian": mtime.isoformat(timespec="seconds"), "cach_tao": CACH_LENH, "file_du_lieu": ""}
+              "thoi_gian": mtime.isoformat(timespec="seconds"), "cach_tao": CACH_LENH, "file_du_lieu": "",
+              **tom_tat_tu_file(goc)}
     dich = lich_su / tt["id"]
     if (dich / TEN_THONG_TIN).exists():
         return dich
@@ -262,4 +277,5 @@ def danh_sach_lich_su(lich_su: Path) -> list[tuple[Path, dict]]:
         return []
     muc = [(p, doc_thong_tin(p)) for p in lich_su.iterdir() if p.is_dir() and not p.name.startswith(".")]
     muc = [(p, tt) for p, tt in muc if tt and co_ket_qua(p)]
+    muc = [(p, tt if "so_sv" in tt else {**tt, **tom_tat_tu_file(p)}) for p, tt in muc]  # mục cũ thiếu số tóm tắt
     return sorted(muc, key=lambda x: x[1].get("thoi_gian", ""), reverse=True)

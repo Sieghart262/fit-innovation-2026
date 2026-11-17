@@ -475,8 +475,8 @@ def trang_lich_su() -> None:
     id_hien_tai = (kho.doc_thong_tin(KET_QUA) or {}).get("id")
     bang = pd.DataFrame([{
         "Thời gian": _thoi_gian(tt), "Dữ liệu": tt.get("ten", "–"), "Cách tạo": tt.get("cach_tao", "–"),
-        "Số SV": tt.get("so_sv"), "Số lớp": tt.get("so_lop"), "Lớp bất thường": tt.get("so_lop_bat_thuong"),
-        "SV đổi mức": tt.get("so_sv_doi_muc"),
+        "Số SV": gd.so(tt.get("so_sv")), "Số lớp": gd.so(tt.get("so_lop")),
+        "Lớp bất thường": gd.so(tt.get("so_lop_bat_thuong")), "SV đổi mức": gd.so(tt.get("so_sv_doi_muc")),
         "Đang hiển thị": "Có" if tt.get("id") == id_hien_tai else ""} for _, tt in ds])
     st.dataframe(bang, hide_index=True, width="stretch", key="bang_lich_su")
 
