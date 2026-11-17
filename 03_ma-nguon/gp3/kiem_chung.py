@@ -54,6 +54,8 @@ def kiem_chung_gp3(d: pd.DataFrame, kq_goc: dict, cfg1: ch1.CauHinh, cfg2: CauHi
         sv = d.loc[d["class_id"].isin(chon), "student"].unique()
         sv = [s for s in sv if s in goc.index and s in moi.index]
         a, b = goc.loc[sv], moi.loc[sv]
+        co_tci = a["TCI"].notna() & b["TCI"].notna()  # bỏ SV "Chưa đủ dữ liệu" (không có TCI để so)
+        a, b = a[co_tci], b[co_tci]
         d_gpa = float((b["GPA4_goc"] - a["GPA4_goc"]).mean())
         d_tci = float((b["TCI"] - a["TCI"]).mean())
         bi_doi = b["muc_truoc"].map(hang) != a["muc_truoc"].map(hang)
@@ -65,12 +67,12 @@ def kiem_chung_gp3(d: pd.DataFrame, kq_goc: dict, cfg1: ch1.CauHinh, cfg2: CauHi
             # cách chấm sai → mức TCI mới phải bằng mức TCI khi chưa cài
             dung = b.loc[bi_doi, "muc_sau"] == a.loc[bi_doi, "muc_sau"]
             ty_le = 1 - d_tci / d_gpa if d_gpa else np.nan
-        dong.append(dict(kich_ban=mo_ta, so_sv_bi_anh_huong=len(sv),
+        dong.append(dict(kich_ban=mo_ta, so_sv_bi_anh_huong=len(a),
                          gpa_danh_nghia_doi_tb=round(d_gpa, 3), tci_doi_tb=round(d_tci, 3),
                          ty_le_go_hoac_giu=ty_le,
                          y_nghia_ty_le="phần tăng thật được GIỮ" if kieu == "gioi_that" else "phần sai lệch được GỠ",
                          so_sv_doi_muc_danh_nghia=int(bi_doi.sum()),
                          ty_le_ve_dung_muc=float(dung.mean()) if len(dung) else np.nan))
-        print(f"  [{kieu:10s}] {len(sv)} SV: GPA danh nghĩa {d_gpa:+.3f}, TCI {d_tci:+.3f}; "
+        print(f"  [{kieu:10s}] {len(a)} SV: GPA danh nghĩa {d_gpa:+.3f}, TCI {d_tci:+.3f}; "
               f"{int(bi_doi.sum())} SV đổi mức danh nghĩa, {dong[-1]['ty_le_ve_dung_muc']:.0%} được xếp đúng mức")
     return pd.DataFrame(dong)

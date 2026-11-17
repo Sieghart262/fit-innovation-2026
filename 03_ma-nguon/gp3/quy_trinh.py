@@ -9,7 +9,7 @@ from gp2.cau_hinh import CauHinhGP2
 from gp2.quy_trinh import chay_gp2
 from .cau_hinh import CauHinhGP3
 from .giai_thich import giai_thich
-from .tci import mon_cua_sinh_vien, tinh_tci
+from .tci import bo_sung_sinh_vien, mon_cua_sinh_vien, tinh_tci
 
 
 def chay_gp3(d_goc: pd.DataFrame, cfg1: ch1.CauHinh | None = None, cfg2: CauHinhGP2 | None = None,
@@ -26,7 +26,7 @@ def chay_gp3(d_goc: pd.DataFrame, cfg1: ch1.CauHinh | None = None, cfg2: CauHinh
     cfg3 = cfg3 or CauHinhGP3()
     kq = chay_gp2(d_goc, cfg1, cfg2)
     mon = mon_cua_sinh_vien(kq["diem"], kq["kq_gp1"])
-    sv = tinh_tci(mon, cfg3)
+    sv = bo_sung_sinh_vien(tinh_tci(mon, cfg3), kq["diem"])
     if co_giai_thich:
         sv["giai_thich"] = giai_thich(sv, mon, cfg3)
     kq.update(mon_sv=mon, phan_loai=sv)

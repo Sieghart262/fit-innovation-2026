@@ -207,6 +207,8 @@ def ghi_ket_qua(kq: pd.DataFrame, hs: pd.DataFrame, xh: pd.DataFrame, doc: pd.Da
     }
     if kc is not None:
         bang["kiem_chung_mo_phong.csv"] = kc
+    else:  # kết quả chính vừa được tạo lại → bảng kiểm chứng cũ không còn khớp, xóa để khỏi đọc nhầm
+        (thu_muc / "kiem_chung_mo_phong.csv").unlink(missing_ok=True)
     ra = []
     for ten, b in bang.items():
         kiem_tra_khong_co_ma_sv(b, ten)

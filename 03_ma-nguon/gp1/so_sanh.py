@@ -64,6 +64,14 @@ def bh_fdr(p_values) -> np.ndarray:
     return q
 
 
+# Các cột do bước so sánh tạo ra. Khai báo sẵn để bảng kết quả LUÔN đủ cột, kể cả khi
+# không lớp nào có mốc (vd file chỉ có 1 lớp) – Giải pháp 2 và phần xuất không bị thiếu cột.
+COT_SO_SANH = ["class_id", "z_course_level", "ref_level", "ref_n_classes", "ref_mean", "z_mean", "z_adj",
+               "p_value", "cohen_d", "ref_std", "sigma_ratio", "ref_a_rate", "a_ucl", "z_a",
+               "ref_fail_rate", "fail_ucl", "z_fail", "ref_rho", "ks_shape_stat", "ks_shape_p",
+               "z_gap", "ref_gap", "gap_diff", "ref_kttx_eq_exam"]
+
+
 def so_sanh_moc(lop: pd.DataFrame, diem: dict, cfg: ch.CauHinh) -> tuple[pd.DataFrame, dict]:
     """So từng lớp với mốc và tính độ lệch, các chỉ số phân tán, p-chart, KS, KTTX − Thi.
 
@@ -163,6 +171,9 @@ def so_sanh_moc(lop: pd.DataFrame, diem: dict, cfg: ch.CauHinh) -> tuple[pd.Data
         o["ref_kttx_eq_exam"] = float(eq_moc.median()) if len(eq_moc) else np.nan
         ra.append(o)
 
-    kq = lop.merge(pd.DataFrame(ra, columns=None if ra else ["class_id"]), on="class_id", how="left")
-    kq["q_value"] = bh_fdr(kq["p_value"]) if "p_value" in kq else np.nan
+    so_sanh = pd.DataFrame(ra, columns=COT_SO_SANH)
+    cot_so = [c for c in COT_SO_SANH if c not in ("class_id", "ref_level")]
+    so_sanh[cot_so] = so_sanh[cot_so].apply(pd.to_numeric, errors="coerce")  # bảng rỗng vẫn có kiểu số
+    kq = lop.merge(so_sanh, on="class_id", how="left")
+    kq["q_value"] = bh_fdr(kq["p_value"])
     return kq, ds_moc

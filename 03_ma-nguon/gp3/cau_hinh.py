@@ -31,6 +31,7 @@ MUC_NANG_LUC = [
     (0.00, "At-Risk"),
 ]
 THU_TU_MUC = [m for _, m in MUC_NANG_LUC]  # Advanced → At-Risk
+CHUA_DU_DU_LIEU = "Chưa đủ dữ liệu"        # SV không có môn nào có điểm hợp lệ → chưa tính được TCI
 
 DO_TIN_CAY_THAP = "Thấp"
 DO_TIN_CAY_DU = "Bình thường"

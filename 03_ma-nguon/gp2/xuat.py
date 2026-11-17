@@ -96,6 +96,8 @@ def ghi_ket_qua(kq: dict, kc: pd.DataFrame | None, cfg: CauHinhGP2, thu_muc: Pat
     }
     if kc is not None:
         bang["kiem_chung_gp2.csv"] = kc
+    else:  # kết quả chính vừa được tạo lại → bảng kiểm chứng cũ không còn khớp, xóa để khỏi đọc nhầm
+        (thu_muc / "kiem_chung_gp2.csv").unlink(missing_ok=True)
     ra = []
     for ten, b in bang.items():
         p = thu_muc / ten

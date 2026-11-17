@@ -78,7 +78,7 @@ class CauHinh:
     min_phu_nang_luc: float = 0.3    # và ≥ 30% SV của lớp có năng lực nền
     so_lop_khac_nang_luc: int = 2    # SV cần ≥ 2 lớp khác mới có năng lực nền
     co_rut_nang_luc: float = 1.0     # hệ số co rút (shrinkage) năng lực nền về 0
-    chenh_kttx_thi_toi_thieu: float = 0.5  # chênh KTTX−Thi phải khác mốc ≥ 0,5 điểm mới tính
+    chenh_kttx_thi_toi_thieu: float = 1.0  # chênh KTTX−Thi phải vượt mức thường của mốc ≥ 1,0 điểm, đúng chiều, mới tính
     sigma_tuyet_doi: float = 0.5     # σ < 0,5 coi như σ → 0 (nếu mốc không thấp như vậy)
     sigma_ti_le_thap: float = 0.6    # σ lớp < 60% σ mốc bắt đầu bị nghi
     rho_thap: float = 0.20           # tương quan với năng lực nền thấp hơn mức này bị nghi

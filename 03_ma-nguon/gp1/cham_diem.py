@@ -5,7 +5,8 @@ Theo quyết định số 1 của đội, một lớp chỉ mang nhãn HIGH_INFL
     1. Lệch so với mốc (điểm lệch ≥ 0,5, tương đương |z| ≈ 2).
     2. Có bằng chứng độc lập rằng độ lệch do cách chấm (độ mạnh bằng chứng ≥ 0,5):
          E1 năng lực nền: điểm lớp vẫn lệch sau khi trừ phần do năng lực SV;
-         E2 KTTX (GV tự chấm) lệch bất thường so với Thi (2 GV chấm);
+         E2 KTTX (GV tự chấm) lệch bất thường so với Thi (2 GV chấm), ĐÚNG CHIỀU với độ lệch
+            và vượt mức thường của các lớp tương đương ít nhất 1,0 điểm;
          E3 phân phối biến dạng: σ quá nhỏ, KTTX trùng y hệt Thi, dồn điểm, mất tương quan với năng lực.
 Lớp chỉ lệch mà không có bằng chứng → NEEDS_REVIEW (gắn cờ xem xét, không sửa điểm).
 """
@@ -80,11 +81,19 @@ def diem_quy_tac(r: pd.Series, cfg: ch.CauHinh) -> dict:
     if bool(r.get("co_nang_luc", False)) and not np.isnan(z_adj) and r.get("ref_level") == "Cùng môn":
         e_nl_up = sigmoid(z_adj, cfg.z_lech, 2.0) if z_adj > 0 else 0.0
         e_nl_down = sigmoid(-z_adj, cfg.z_lech, 2.0) if z_adj < 0 else 0.0
-    # E2: KTTX lệch bất thường so với Thi (phải khác mốc ≥ 0,5 điểm)
+    # E2: KTTX (GV tự chấm) lệch bất thường so với Thi (2 GV chấm) – CHỈ tính khi ĐÚNG CHIỀU.
+    # Thi thấp hơn KTTX ở mức các lớp tương đương cũng vậy là bình thường (đã nằm trong mốc).
+    #   Nghi chấm dễ  (lệch lên):   Thi thấp hơn KTTX NHIỀU HƠN mức thường ≥ ngưỡng → GV cho điểm quá trình rộng tay.
+    #   Nghi ép điểm (lệch xuống): KTTX thấp hơn mức thường so với Thi ≥ ngưỡng → GV chấm quá trình chặt hơn hẳn.
+    # Lệch ngược chiều (vd lớp điểm cao nhưng Thi cao hơn hẳn KTTX) KHÔNG phải bằng chứng về cách chấm của GV.
     z_gap, gap_diff = _so(r, "z_gap"), _so(r, "gap_diff")
-    e_gap = 0.0
+    e_gap_up = e_gap_down = 0.0
     if not np.isnan(z_gap) and not np.isnan(gap_diff) and abs(gap_diff) >= cfg.chenh_kttx_thi_toi_thieu:
-        e_gap = sigmoid(abs(z_gap), 2.5, 1.5)
+        if gap_diff > 0:
+            e_gap_up = sigmoid(abs(z_gap), 2.5, 1.5)
+        else:
+            e_gap_down = sigmoid(abs(z_gap), 2.5, 1.5)
+    e_gap = max(e_gap_up, e_gap_down)  # độ bất thường của chênh lệch, không kể chiều (chỉ để mô tả)
     # E3: phân phối biến dạng
     std, ratio = _so(r, "std"), _so(r, "sigma_ratio")
     s_sigma = kep01((cfg.sigma_ti_le_thap - ratio) / 0.40) if not np.isnan(ratio) else 0.0
@@ -104,11 +113,11 @@ def diem_quy_tac(r: pd.Series, cfg: ch.CauHinh) -> dict:
                if _so(r, "ceiling_share") < 0.3 else 0.0)
     e_dist = hoac_nhieu(s_sigma, 0.9 * s_copy, 0.8 * s_corr, 0.6 * s_heap, 0.5 * s_shape)
 
-    E_up = hoac_nhieu(e_nl_up, e_gap, e_dist)
-    E_down = hoac_nhieu(e_nl_down, e_gap, e_dist)
+    E_up = hoac_nhieu(e_nl_up, e_gap_up, e_dist)
+    E_down = hoac_nhieu(e_nl_down, e_gap_down, e_dist)
     return dict(dev_up=dev_up, dev_down=dev_down, s_mean_up=s_tb_len, s_mean_down=s_tb_xuong,
                 s_a_rate=s_a, s_fail_rate=s_f, e_ability_up=e_nl_up, e_ability_down=e_nl_down,
-                e_gap=e_gap, s_sigma=s_sigma, s_copy=s_copy, s_corr=s_corr, s_heap=s_heap,
+                e_gap=e_gap, e_gap_up=e_gap_up, e_gap_down=e_gap_down, s_sigma=s_sigma, s_copy=s_copy, s_corr=s_corr, s_heap=s_heap,
                 s_shape=s_shape, e_dist=e_dist, E_up=E_up, E_down=E_down,
                 S_HIGH_INFLATION=dev_up * E_up, S_UNUSUALLY_STEEP=dev_down * E_down,
                 S_SUSPICIOUS_DISTRIBUTION=hoac_nhieu(e_dist, 0.5 * e_gap))
@@ -183,11 +192,17 @@ def giai_thich(r: pd.Series, cfg: ch.CauHinh) -> str:
     if r["s_fail_rate"] > 0.3:
         y.append(f"Tỷ lệ trượt {r['fail_rate']:.0%} (mốc {r['ref_fail_rate']:.0%}, giới hạn {r['fail_ucl']:.0%})")
     # Bằng chứng
-    if max(r["e_ability_up"], r["e_ability_down"]) > 0.3:
-        y.append(f"[Bằng chứng] SV ở lớp này {'cao' if r['z_adj'] > 0 else 'thấp'} hơn hẳn so với chính họ "
+    lech_len = r["dev_up"] >= r["dev_down"]  # chiều lệch chính của lớp
+    if (r["e_ability_up"] if lech_len else r["e_ability_down"]) > 0.3:
+        y.append(f"[Bằng chứng] SV ở lớp này {'cao' if lech_len else 'thấp'} hơn hẳn so với chính họ "
                  f"ở các lớp khác (z={r['z_adj']:+.1f}, {int(r['n_ability'])} SV có năng lực nền)")
     if r["e_gap"] > 0.3:
-        y.append(f"[Bằng chứng] KTTX − Thi = {r['proc_exam_gap']:+.1f} điểm, mốc {r['ref_gap']:+.1f} (z={r['z_gap']:+.1f})")
+        chenh = f"KTTX − Thi = {r['proc_exam_gap']:+.1f} điểm, mức thường của mốc {r['ref_gap']:+.1f} (z={r['z_gap']:+.1f})"
+        if (r["e_gap_up"] if lech_len else r["e_gap_down"]) > 0.3:
+            y.append(f"[Bằng chứng] {chenh}: điểm quá trình được chấm "
+                     f"{'rộng tay' if lech_len else 'chặt'} hơn hẳn các lớp tương đương")
+        else:
+            y.append(f"{chenh} – ngược chiều với độ lệch của lớp nên không tính là bằng chứng")
     if r["s_sigma"] > 0.3:
         y.append(f"[Bằng chứng] σ={r['std']:.2f}, chỉ bằng {r['sigma_ratio']:.0%} σ mốc")
     if r["s_copy"] > 0.3:
@@ -228,7 +243,7 @@ def cham_lop(kq: pd.DataFrame, cfg: ch.CauHinh) -> pd.DataFrame:
     Vì sao cần: đây là đầu ra bắt buộc của Giải pháp 1 và đầu vào cho Giải pháp 2.
     """
     kq = kq.copy()
-    co_moc = kq["duoc_cham"] & kq["z_mean"].notna() if "z_mean" in kq else kq["duoc_cham"] & False
+    co_moc = kq["duoc_cham"] & kq["z_mean"].notna()
     el = kq[co_moc].copy()
     if len(el):
         el = pd.concat([el, el.apply(lambda r: pd.Series(diem_quy_tac(r, cfg)), axis=1)], axis=1)
@@ -263,7 +278,7 @@ def cham_lop(kq: pd.DataFrame, cfg: ch.CauHinh) -> pd.DataFrame:
 
     ra = pd.concat([el, con_lai], ignore_index=True)
     for cot in ["anomaly_score", "ml_score", "dev_up", "dev_down", "e_ability_up", "e_ability_down",
-                "e_gap", "s_sigma", "s_copy", "s_corr", "s_heap", "s_shape", "s_a_rate", "s_fail_rate"]:
+                "e_gap", "e_gap_up", "e_gap_down", "s_sigma", "s_copy", "s_corr", "s_heap", "s_shape", "s_a_rate", "s_fail_rate"]:
         if cot not in ra:
             ra[cot] = np.nan
     ra["secondary_flags"] = ra.get("secondary_flags", pd.Series("", index=ra.index)).fillna("")

@@ -10,14 +10,20 @@ from . import cau_hinh as ch
 
 TRAN = 9.5  # điểm ≥ 9,5 coi là "sát trần": lớp giỏi thật cũng dồn điểm ở đây
 
+# Các chỉ số tính từ điểm hợp lệ. Khai báo sẵn (để trống) cho MỌI lớp, nhờ đó bảng kết quả
+# luôn đủ cột kể cả khi file không có lớp nào có điểm hợp lệ – các bước sau không bị thiếu cột.
+COT_CHI_SO = ["mean", "median", "std", "min", "max", "a_rate", "fail_rate", "skew", "mode_share",
+              "mode_value", "ceiling_share", "n_ability", "ability_cov", "mean_ability", "rho_ability",
+              "resid_mean", "kttx_mean", "exam_mean", "proc_exam_gap", "kttx_eq_exam"]
+
 
 def dac_trung_lop(d: pd.DataFrame, b: float, cfg: ch.CauHinh) -> tuple[pd.DataFrame, dict]:
     """Tính các chỉ số mô tả cho mỗi lớp.
 
     Chỉ số chính: ĐTB, σ, tỷ lệ A, tỷ lệ trượt, độ lệch (skew), tỷ lệ SV cùng một mức
     điểm (mode_share), năng lực nền TB của lớp, tương quan điểm – năng lực nền,
-    ĐTB đã trừ phần do năng lực SV (adj_mean), chênh KTTX − Thi, tỷ lệ SV có KTTX
-    trùng y hệt Thi, resid_mean (SV ở lớp này cao/thấp hơn chính họ ở các lớp khác).
+    chênh KTTX − Thi, tỷ lệ SV có KTTX trùng y hệt Thi, resid_mean (SV ở lớp này
+    cao/thấp hơn chính họ ở các lớp khác). Lớp không có điểm hợp lệ: các chỉ số để trống.
     Tham số:
         d: bảng lượt điểm đã có zc, ability, ability_raw, co_cau, du_lieu_chua_du.
         b: hệ số hồi quy zc theo ability (chỉ để báo cáo).
@@ -40,6 +46,7 @@ def dac_trung_lop(d: pd.DataFrame, b: float, cfg: ch.CauHinh) -> tuple[pd.DataFr
                  n_sv=int(g["student"].nunique()), n_rows=len(g), n=n,
                  n_absent=int(g["absent"].sum()), n_missing=int(g["hp"].isna().sum()))
         r["absent_rate"] = r["n_absent"] / max(n + r["n_absent"], 1)
+        r.update(dict.fromkeys(COT_CHI_SO, np.nan), co_nang_luc=False)
         rows.append(r)
         if n == 0:
             continue
