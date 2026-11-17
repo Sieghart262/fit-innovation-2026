@@ -20,9 +20,7 @@ from __future__ import annotations
 import hmac
 import os
 import sys
-import tempfile
 import traceback
-import warnings
 from datetime import datetime
 from pathlib import Path
 
@@ -36,16 +34,21 @@ for _p in (THU_MUC_MA, Path(__file__).resolve().parent):
     if str(_p) not in sys.path:
         sys.path.insert(0, str(_p))
 
+import bao_cao  # noqa: E402
 import giao_dien as gd  # noqa: E402
+import kho_ket_qua as kho  # noqa: E402
 from eda import config as cf  # noqa: E402
+from eda.load import LoiDuLieu  # noqa: E402
 from gp1 import cau_hinh as ch1  # noqa: E402
 from gp3 import cau_hinh as ch3  # noqa: E402
 
-KET_QUA = Path(os.environ.get("FIT_KET_QUA", cf.THU_MUC_GOC / "01_du-lieu" / "ket-qua"))
+KET_QUA = Path(os.environ.get("FIT_KET_QUA", kho.THU_MUC_KET_QUA))
+LICH_SU = Path(os.environ.get("FIT_LICH_SU", kho.thu_muc_lich_su(KET_QUA)))
 NGUONG = cf.NGUONG_NHOM_TOI_THIEU
 CONG_KHAI, NHA_TRUONG = "Công khai", "Nhà trường"
 COT_DIEU_CHINH = "Số điểm bị trừ (âm = được cộng)"  # tên cột trong hieu_chinh_theo_lop.csv (gp2/xuat.py)
 TRUOC, SAU = "Trước hiệu chỉnh (GPA danh nghĩa)", "Sau hiệu chỉnh (TCI)"
+RIENG, GOP = "Phân tích riêng file này", "Gộp thêm vào dữ liệu đang hiển thị"
 THU_TU_NHAN = [ch1.HIGH, ch1.STEEP, ch1.DIST, ch1.REVIEW, ch1.NORMAL, ch1.IT_DU_LIEU, ch1.CHUA_DU, ch1.KHONG_MOC]
 
 
@@ -59,8 +62,9 @@ def file_ket_qua(thu_muc: Path) -> dict[str, Path]:
 
 
 def dau_thoi_gian(thu_muc: Path) -> tuple:
-    """Thời điểm sửa cuối của các file kết quả – đổi khi run_gp3.py vừa ghi kết quả mới."""
-    return tuple(p.stat().st_mtime_ns if p.exists() else 0 for p in file_ket_qua(thu_muc).values())
+    """Thời điểm sửa cuối của các file kết quả – đổi khi có kết quả mới (chạy lệnh, tải file lên, reset)."""
+    cac_file = list(file_ket_qua(thu_muc).values()) + [thu_muc / kho.TEN_THONG_TIN]
+    return tuple(p.stat().st_mtime_ns if p.exists() else 0 for p in cac_file)
 
 
 @st.cache_data(show_spinner=False)
@@ -142,7 +146,7 @@ def bieu_do_nhan(dem: pd.DataFrame) -> alt.Chart:
 # ---------------------------------------------------------------------------
 # Các trang
 # ---------------------------------------------------------------------------
-def trang_tong_quan(kq: dict, vai_tro: str) -> None:
+def trang_tong_quan(kq: dict, vai_tro: str, khoa: str = "") -> None:
     """Trang tổng quan: câu tóm tắt, 4 con số chính, biểu đồ Trước/Sau, SV đổi mức."""
     sv, lop = kq["sv"], kq.get("lop", pd.DataFrame())
     co_tci = sv["TCI"].notna()
@@ -167,7 +171,7 @@ def trang_tong_quan(kq: dict, vai_tro: str) -> None:
     trai, phai = st.columns([3, 2], gap="large")
     with trai:
         st.subheader("Số sinh viên ở mỗi mức năng lực")
-        st.altair_chart(bieu_do_muc(sv), width="stretch")
+        st.altair_chart(bieu_do_muc(sv), width="stretch", key=f"{khoa}bd_muc")
     with phai:
         st.subheader("Sinh viên đổi mức như thế nào")
         mt = (pd.crosstab(sv["Mức theo GPA danh nghĩa"], sv["Mức theo TCI"])
@@ -176,16 +180,16 @@ def trang_tong_quan(kq: dict, vai_tro: str) -> None:
         if chuyen:
             bang = pd.DataFrame(sorted(chuyen, key=lambda x: -x[2]), columns=["Từ mức", "Sang mức", "Số sinh viên"])
             bang["Số sinh viên"] = bang["Số sinh viên"].map(an_nho if vai_tro == CONG_KHAI else gd.so)
-            st.dataframe(bang, hide_index=True, width="stretch")
+            st.dataframe(bang, hide_index=True, width="stretch", key=f"{khoa}bang_doi_muc")
         else:
             st.write("Không có sinh viên nào đổi mức.")
         if vai_tro == CONG_KHAI:
             gd.ghi_chu("Chế độ công khai: nhóm dưới 5 sinh viên hiện \"<5\".")
         with st.expander("Xem bảng đầy đủ (hàng: mức trước · cột: mức sau)"):
-            st.dataframe(mt.map(an_nho) if vai_tro == CONG_KHAI else mt, width="stretch")
+            st.dataframe(mt.map(an_nho) if vai_tro == CONG_KHAI else mt, width="stretch", key=f"{khoa}ma_tran")
 
     st.subheader("Phân phối điểm trước và sau hiệu chỉnh")
-    st.altair_chart(bieu_do_phan_phoi(sv), width="stretch")
+    st.altair_chart(bieu_do_phan_phoi(sv), width="stretch", key=f"{khoa}bd_phan_phoi")
     gd.ghi_chu("Đường đứt là ngưỡng giữa các mức: 2,50 · 3,20 · 3,60. Lượt vắng thi (điểm 0) không được tính; "
                "sinh viên không có môn nào có điểm hợp lệ được ghi \"Chưa đủ dữ liệu\" và không nằm trong biểu đồ.")
 
@@ -200,11 +204,13 @@ def trang_tong_quan(kq: dict, vai_tro: str) -> None:
                                                 for m in ch3.THU_TU_MUC) + ".")
 
 
-def trang_lop(kq: dict, vai_tro: str) -> None:
+def trang_lop(kq: dict, vai_tro: str, khoa: str = "") -> None:
     """Trang lớp học phần: số lớp theo kết luận; bảng từng lớp và lý do chỉ dành cho vai trò nhà trường.
 
     Vì sao ẩn bảng từng lớp ở chế độ công khai: từ mã lớp có thể suy ra giảng viên, trong khi
     điều kiện dữ liệu yêu cầu không xác định danh tính sinh viên hay giảng viên.
+    Tham số khoa: tiền tố cho tên các ô lọc, để trang này hiện được hai lần trên cùng màn hình
+    (dashboard chính và phần xem trước một mục lịch sử) mà không bị trùng.
     """
     lop = kq["lop"]
     so_lop = lop["anomaly_type"].value_counts()
@@ -221,7 +227,7 @@ def trang_lop(kq: dict, vai_tro: str) -> None:
     trai, phai = st.columns([3, 2], gap="large")
     with trai:
         st.subheader("Số lớp theo kết luận")
-        st.altair_chart(bieu_do_nhan(dem), width="stretch")
+        st.altair_chart(bieu_do_nhan(dem), width="stretch", key=f"{khoa}bd_nhan")
     with phai:
         st.subheader("Ý nghĩa của từng kết luận")
         for _, d in dem.iterrows():
@@ -234,9 +240,9 @@ def trang_lop(kq: dict, vai_tro: str) -> None:
     st.subheader("Danh sách lớp")
     c = st.columns([3, 2, 2])
     mac_dinh = [gd.TEN_NHAN[n] for n in ch1.NHAN_BAT_THUONG]
-    chon = c[0].multiselect("Kết luận", list(dem["Kết luận"]), default=mac_dinh)
-    nam = c[1].selectbox("Năm học", ["Tất cả"] + sorted(lop["year"].dropna().unique()))
-    mon = c[2].selectbox("Mã môn", ["Tất cả"] + sorted(lop["course"].dropna().unique()))
+    chon = c[0].multiselect("Kết luận", list(dem["Kết luận"]), default=mac_dinh, key=f"{khoa}ket_luan")
+    nam = c[1].selectbox("Năm học", ["Tất cả"] + sorted(lop["year"].dropna().unique()), key=f"{khoa}nam")
+    mon = c[2].selectbox("Mã môn", ["Tất cả"] + sorted(lop["course"].dropna().unique()), key=f"{khoa}mon")
     bang = lop.assign(ket_luan=lop["anomaly_type"].map(gd.TEN_NHAN))
     bang = bang[bang["ket_luan"].isin(chon)]
     if nam != "Tất cả":
@@ -248,7 +254,7 @@ def trang_lop(kq: dict, vai_tro: str) -> None:
            "ket_luan": "Kết luận", "anomaly_score": "Mức độ bất thường", "mean": "Điểm TB lớp",
            "ref_mean": "Điểm TB các lớp tương đương"}
     st.dataframe(
-        bang[list(cot)].rename(columns=cot), hide_index=True, width="stretch", height=380,
+        bang[list(cot)].rename(columns=cot), hide_index=True, width="stretch", height=380, key=f"{khoa}ds_lop",
         column_config={
             "Mức độ bất thường": st.column_config.ProgressColumn(
                 "Mức độ bất thường", min_value=0.0, max_value=1.0, format="%.2f",
@@ -262,7 +268,7 @@ def trang_lop(kq: dict, vai_tro: str) -> None:
 
     if len(bang):
         st.subheader("Vì sao lớp này có kết luận như vậy?")
-        ma = st.selectbox("Chọn một lớp trong danh sách trên", list(bang["class_id"]))
+        ma = st.selectbox("Chọn một lớp trong danh sách trên", list(bang["class_id"]), key=f"{khoa}chon_lop")
         d = bang[bang["class_id"] == ma].iloc[0]
         st.markdown(f"**Lớp {d['class_id']}** · môn {d['course']} · {d['year']}, học kỳ {int(d['sem'])} · "
                     f"{int(d['n_sv'])} sinh viên · kết luận: **{d['ket_luan']}**")
@@ -275,7 +281,7 @@ def trang_lop(kq: dict, vai_tro: str) -> None:
         gd.danh_sach_ly_do(cac_y)
 
 
-def trang_hieu_chinh(kq: dict, vai_tro: str) -> None:
+def trang_hieu_chinh(kq: dict, vai_tro: str, khoa: str = "") -> None:
     """Trang hiệu chỉnh điểm: tóm tắt; biểu đồ và bảng từng lớp chỉ dành cho vai trò nhà trường."""
     hc = kq["hieu_chinh"]
     cot_dc = cot_dieu_chinh(hc)
@@ -316,17 +322,17 @@ def trang_hieu_chinh(kq: dict, vai_tro: str) -> None:
                                   scale=alt.Scale(domain=["Cộng điểm", "Trừ điểm"], range=[gd.MAU_TRUOC, gd.MAU_SAU])),
                   tooltip=["Mã lớp HP", "Mã môn", "Năm học", "Kết luận", "Mức"])
           .properties(height=max(300, 13 * len(sua))))
-    st.altair_chart(gd.kieu_bieu_do(bd), width="stretch")
+    st.altair_chart(gd.kieu_bieu_do(bd), width="stretch", key=f"{khoa}bd_hieu_chinh")
 
     bang = sua.sort_values("Điều chỉnh")[["Mã lớp HP", "Mã môn", "Năm học", "Kết luận", "ĐTB lớp", "ĐTB mốc", "Điều chỉnh"]]
     bang = bang.rename(columns={"Mã lớp HP": "Mã lớp", "ĐTB lớp": "Điểm TB lớp", "ĐTB mốc": "Điểm TB các lớp tương đương",
                                 "Điều chỉnh": "Điều chỉnh cho cả lớp"})
-    st.dataframe(bang, hide_index=True, width="stretch", column_config={
+    st.dataframe(bang, hide_index=True, width="stretch", key=f"{khoa}bang_hieu_chinh", column_config={
         "Điểm TB lớp": st.column_config.NumberColumn(format="%.2f"),
         "Điểm TB các lớp tương đương": st.column_config.NumberColumn(format="%.2f"),
         "Điều chỉnh cho cả lớp": st.column_config.NumberColumn(format="%+.2f", help="Số điểm cộng (+) hoặc trừ (−)")})
     with st.expander("Bảng chi tiết kỹ thuật (Δ, α)"):
-        st.dataframe(sua.drop(columns=["Điều chỉnh", "Hướng điều chỉnh", "Kết luận", "Mức"]), hide_index=True, width="stretch")
+        st.dataframe(sua.drop(columns=["Điều chỉnh", "Hướng điều chỉnh", "Kết luận", "Mức"]), hide_index=True, width="stretch", key=f"{khoa}bang_ky_thuat")
 
 
 def trang_tra_cuu(kq: dict) -> None:
@@ -371,63 +377,135 @@ def trang_tra_cuu(kq: dict) -> None:
                        "phan_loai_sinh_vien.csv", "text/csv")
 
 
-def trang_du_lieu_moi() -> None:
-    """Trang phân tích dữ liệu mới (chỉ nhà trường): tải file điểm → chạy GP1–GP3 → xem và tải kết quả.
+def _thoi_gian(tt: dict | None) -> str:
+    """Thời điểm phân tích dạng "14:05 ngày 17/11/2026"."""
+    if not tt or not tt.get("thoi_gian"):
+        return "–"
+    return datetime.fromisoformat(tt["thoi_gian"]).strftime("%H:%M ngày %d/%m/%Y")
 
-    Vì sao cần: đề yêu cầu hệ thống nhận dữ liệu điểm và trả về kết quả phân loại.
+
+def khung_reset(co_du_lieu: bool) -> None:
+    """Nút Reset có bước xác nhận: cất kết quả đang dùng vào lịch sử rồi làm trống dashboard."""
+    st.subheader("Bắt đầu lại từ đầu")
+    if not co_du_lieu:
+        gd.ghi_chu("Dashboard đang trống. Tải file điểm lên ở bên dưới để tạo dashboard mới.")
+        return
+    gd.ghi_chu("Reset sẽ làm trống dashboard cho mọi người xem. Kết quả hiện tại không bị mất: "
+               "nó được cất vào mục Lịch sử phân tích, mở lại hoặc tải về được.")
+    if not st.session_state.get("hoi_reset"):
+        if st.button("Reset dashboard"):
+            st.session_state["hoi_reset"] = True
+            st.rerun()
+        return
+    st.warning("Bạn chắc chắn muốn reset? Dashboard sẽ trống cho tới khi có file điểm mới được phân tích.")
+    c = st.columns([1, 1, 4])
+    if c[0].button("Đồng ý reset", type="primary"):
+        da_luu = kho.reset(KET_QUA, LICH_SU)
+        st.session_state["hoi_reset"] = False
+        st.session_state["thong_bao"] = ("Đã reset. Dashboard đang trống." +
+                                         (" Kết quả cũ đã được cất vào Lịch sử phân tích." if da_luu else ""))
+        st.rerun()
+    if c[1].button("Hủy"):
+        st.session_state["hoi_reset"] = False
+        st.rerun()
+
+
+def trang_du_lieu_moi(co_du_lieu: bool) -> None:
+    """Trang phân tích dữ liệu mới (chỉ nhà trường): reset, tải file điểm, phân tích riêng hoặc gộp.
+
+    Kết quả mới thay cho dashboard của mọi người xem và được lưu vào lịch sử (quyết định của đội).
+    Vì sao cần: đề yêu cầu hệ thống nhận dữ liệu điểm và trả về kết quả phân loại; nhà trường
+    muốn phân tích nhóm dữ liệu khác mà vẫn giữ được các lần phân tích trước.
     File chỉ xử lý trên máy đang chạy dashboard, không gửi đi đâu.
     """
-    gd.tom_tat("Tải lên một file điểm khác để hệ thống phân tích. File chỉ được xử lý trên máy này, không gửi ra ngoài.")
+    tt = kho.doc_thong_tin(KET_QUA)
+    if co_du_lieu:
+        ten = tt["ten"] if tt else "Kết quả phân tích trước đây"
+        gd.tom_tat(f"Dashboard đang hiển thị: <b>{gd.html.escape(ten)}</b> (phân tích lúc {_thoi_gian(tt)}).")
+    else:
+        gd.tom_tat("Dashboard đang <b>trống</b>. Tải file điểm lên để tạo dashboard mới.")
+    khung_reset(co_du_lieu)
+
+    st.subheader("Phân tích file điểm mới")
     c = st.columns(3, gap="large")
-    c[0].markdown("**Bước 1 · Chuẩn bị file**\n\nFile CSV có đủ 19 cột, cùng tên cột như file điểm gốc. Tải file mẫu bên dưới để xem tên cột.")
-    c[1].markdown("**Bước 2 · Tải file lên**\n\nKéo thả file vào ô bên dưới, hoặc bấm nút *Upload* để chọn file.")
-    c[2].markdown("**Bước 3 · Bấm Phân tích**\n\nChờ khoảng 30 giây. Kết quả hiện ngay bên dưới và tải về được.")
+    c[0].markdown("**Bước 1 · Chuẩn bị file**\n\nFile CSV có đủ 19 cột, cùng tên cột như file điểm gốc. "
+                  "Tải file mẫu bên dưới để xem tên cột.")
+    c[1].markdown("**Bước 2 · Tải file lên và chọn cách phân tích**\n\nKéo thả file vào ô bên dưới, hoặc bấm *Upload*.")
+    c[2].markdown("**Bước 3 · Bấm Phân tích**\n\nChờ khoảng 30 giây. Dashboard tự chuyển sang kết quả mới.")
     st.download_button("Tải file mẫu (chỉ có dòng tên cột)", (",".join(cf.COT_BAT_BUOC) + "\n").encode("utf-8-sig"),
                        "mau_du_lieu_diem.csv", "text/csv")
     tep = st.file_uploader("File điểm (CSV)", type="csv")
+    co_the_gop = co_du_lieu and kho.file_du_lieu(KET_QUA) is not None
+    lua_chon = [RIENG, GOP] if co_the_gop else [RIENG]
+    cach = st.radio("Cách phân tích", lua_chon, captions=[
+        "Dashboard chỉ dùng dữ liệu trong file này. Kết quả đang hiển thị được cất vào lịch sử.",
+        "Ghép file này với dữ liệu đang hiển thị rồi phân tích lại toàn bộ. Nếu cùng một sinh viên trong "
+        "cùng một lớp có ở cả hai, dùng dòng của file mới."][:len(lua_chon)])
+    if co_du_lieu and not co_the_gop:
+        gd.ghi_chu("Không gộp được vì không tìm thấy file điểm của dữ liệu đang hiển thị.")
+    gd.ghi_chu("Sau khi phân tích, mọi người mở dashboard đều thấy kết quả mới. Chế độ công khai vẫn chỉ có số liệu tổng hợp.")
     if tep is not None and st.button("Phân tích", type="primary"):
-        from eda.load import LoiDuLieu, doc_du_lieu_diem
-        from gp1.du_lieu import chuan_bi
-        from gp3.quy_trinh import chay_gp3
-        from gp3.xuat import COT_PHAN_LOAI
-
-        st.session_state.pop("kq_moi", None)
-        with st.spinner("Đang phân tích (khoảng 30 giây)..."), tempfile.TemporaryDirectory() as tam:
-            p = Path(tam) / "Du_lieu.csv"
-            p.write_bytes(tep.getvalue())
+        with st.spinner("Đang phân tích (khoảng 30 giây)..."):
             try:
-                with warnings.catch_warnings():
-                    warnings.simplefilter("ignore", RuntimeWarning)
-                    kq = chay_gp3(chuan_bi(doc_du_lieu_diem(p)[0]))
-                # Lưu vào phiên làm việc: bấm nút tải về làm trang chạy lại, kết quả vẫn phải còn trên màn hình
-                st.session_state["kq_moi"] = {
-                    "ten": tep.name,
-                    "sv": kq["phan_loai"].reindex(columns=list(COT_PHAN_LOAI)).rename(columns=COT_PHAN_LOAI),
-                    "so_lop": len(kq["kq_gp1"]),
-                    "bat_thuong": int(kq["kq_gp1"]["anomaly_type"].isin(ch1.NHAN_BAT_THUONG).sum()),
-                    "hieu_chinh": int(kq["lop"]["dich_chuyen"].ne(0).sum())}
+                tt_moi = kho.phan_tich_moi(tep.getvalue(), tep.name, cach == GOP, KET_QUA, LICH_SU)
+                loi_gop = (f" Đã gộp {gd.so(tt_moi['so_dong_cu'])} dòng đang có với {gd.so(tt_moi['so_dong_moi'])} dòng mới"
+                           f" ({gd.so(tt_moi['so_dong_thay'])} dòng trùng được thay bằng dòng mới)." if "so_dong_cu" in tt_moi else "")
+                st.session_state["thong_bao"] = (f"Đã phân tích xong \"{tt_moi['ten']}\": {gd.so(tt_moi['so_sv'])} sinh viên, "
+                                                 f"{gd.so(tt_moi['so_lop'])} lớp. Dashboard đã chuyển sang kết quả mới." + loi_gop)
+                st.rerun()
             except LoiDuLieu as loi:
-                st.error(f"File chưa đúng cấu trúc. {loi}")
+                st.error(f"File chưa đúng yêu cầu. {loi}")
             except Exception as loi:  # noqa: BLE001 – người dùng không cần thấy thông báo kỹ thuật dài
                 traceback.print_exc()  # chi tiết kỹ thuật in ra cửa sổ đang chạy dashboard
                 st.error("Không phân tích được file này. Hãy kiểm tra file có đủ 19 cột và dữ liệu đúng kiểu như "
-                         f"file điểm gốc. (Mã lỗi: {type(loi).__name__})")
+                         f"file điểm gốc. Dashboard vẫn giữ nguyên kết quả cũ. (Mã lỗi: {type(loi).__name__})")
 
-    moi = st.session_state.get("kq_moi")
-    if moi is None:
+
+def trang_lich_su() -> None:
+    """Trang lịch sử phân tích (chỉ nhà trường): danh sách mọi lần phân tích, xem trước và tải về.
+
+    Vì sao cần: reset hay phân tích file mới không làm mất kết quả cũ; nhà trường mở lại được bất kỳ
+    lần nào, xem như trên dashboard, và tải về bản đầy đủ biểu đồ và lời giải thích.
+    """
+    ds = kho.danh_sach_lich_su(LICH_SU)
+    if not ds:
+        gd.tom_tat("Chưa có lần phân tích nào trong lịch sử.")
         return
-    sv = moi["sv"]
-    st.subheader(f"Kết quả phân tích file {moi['ten']}")
-    c = st.columns(4)
-    gd.the_so(c[0], "Sinh viên được xếp mức", gd.so(sv["TCI"].notna().sum()))
-    gd.the_so(c[1], "Lớp có dấu hiệu bất thường", gd.so(moi["bat_thuong"]), f"trên {gd.so(moi['so_lop'])} lớp")
-    gd.the_so(c[2], "Lớp được hiệu chỉnh điểm", gd.so(moi["hieu_chinh"]))
-    gd.the_so(c[3], "Sinh viên đổi mức", gd.so(sv["Thay đổi mức"].ne("Giữ nguyên").sum()))
-    st.altair_chart(bieu_do_muc(sv), width="stretch")
-    if moi["so_lop"] < 30:
-        gd.ghi_chu("File có ít lớp nên nhiều lớp không có đủ lớp tương đương để so sánh; khi đó hệ thống giữ nguyên điểm.")
-    st.download_button("Tải kết quả xếp mức (CSV)", sv.to_csv(index=False).encode("utf-8-sig"),
-                       "ket_qua_xep_muc.csv", "text/csv")
+    gd.tom_tat(f"Có <b>{len(ds)}</b> lần phân tích được lưu. Chọn một lần để xem trước hoặc tải về.")
+    id_hien_tai = (kho.doc_thong_tin(KET_QUA) or {}).get("id")
+    bang = pd.DataFrame([{
+        "Thời gian": _thoi_gian(tt), "Dữ liệu": tt.get("ten", "–"), "Cách tạo": tt.get("cach_tao", "–"),
+        "Số SV": tt.get("so_sv"), "Số lớp": tt.get("so_lop"), "Lớp bất thường": tt.get("so_lop_bat_thuong"),
+        "SV đổi mức": tt.get("so_sv_doi_muc"),
+        "Đang hiển thị": "Có" if tt.get("id") == id_hien_tai else ""} for _, tt in ds])
+    st.dataframe(bang, hide_index=True, width="stretch", key="bang_lich_su")
+
+    nhan = [f"{_thoi_gian(tt)} · {tt.get('ten', '–')}" for _, tt in ds]
+    i = st.selectbox("Chọn một lần phân tích", range(len(ds)), format_func=lambda k: nhan[k], key="chon_lich_su")
+    thu_muc, tt = ds[i]
+    ten_file = f"bao_cao_{tt['id']}"
+    c = st.columns(2)
+    c[0].download_button("Tải báo cáo đầy đủ (HTML – mở bằng trình duyệt, in ra PDF được)",
+                         bao_cao.tao_bao_cao_html(thu_muc).encode("utf-8"), f"{ten_file}.html", "text/html",
+                         type="primary", width="stretch", key=f"tai_html_{tt['id']}")
+    c[1].download_button("Tải toàn bộ file kết quả (ZIP)", bao_cao.nen_zip(thu_muc), f"ket_qua_{tt['id']}.zip",
+                         "application/zip", width="stretch", key=f"tai_zip_{tt['id']}")
+    gd.ghi_chu("Báo cáo HTML có đủ biểu đồ và lời giải thích như trên dashboard. Gói ZIP có thêm danh sách xếp mức "
+               "từng sinh viên, điểm đã hiệu chỉnh và file điểm đầu vào.")
+
+    if st.toggle("Xem trước lần phân tích này", key=f"xem_truoc_{tt['id']}"):
+        kq = doc_ket_qua(str(thu_muc), dau_thoi_gian(thu_muc))
+        if "sv" not in kq:
+            st.error("Mục lịch sử này thiếu file kết quả.")
+            return
+        st.markdown(f"#### Xem trước: {gd.html.escape(tt.get('ten', ''))} ({_thoi_gian(tt)})")
+        t = st.tabs(["Tổng quan", "Lớp học phần", "Hiệu chỉnh điểm"])
+        with t[0]:
+            trang_tong_quan(kq, NHA_TRUONG, khoa=f"ls_{tt['id']}_")
+        with t[1]:
+            trang_lop(kq, NHA_TRUONG, khoa=f"ls_{tt['id']}_")
+        with t[2]:
+            trang_hieu_chinh(kq, NHA_TRUONG, khoa=f"ls_{tt['id']}_")
 
 
 # ---------------------------------------------------------------------------
@@ -462,12 +540,12 @@ def chon_vai_tro() -> str:
 
 
 def thong_tin_thanh_ben(kq: dict) -> None:
-    """Thanh bên: thời điểm cập nhật kết quả và chú giải các mức năng lực."""
+    """Thanh bên: dữ liệu đang hiển thị và chú giải các mức năng lực."""
     with st.sidebar:
-        st.markdown("## Dữ liệu")
-        moi_nhat = max(dau_thoi_gian(KET_QUA))
-        if moi_nhat:
-            st.caption(f"Kết quả cập nhật lúc {datetime.fromtimestamp(moi_nhat / 1e9):%H:%M ngày %d/%m/%Y}")
+        st.markdown("## Dữ liệu đang hiển thị")
+        tt = kho.doc_thong_tin(KET_QUA)
+        if tt:
+            st.caption(f"{tt.get('ten', '–')} · phân tích lúc {_thoi_gian(tt)}")
         if "lop" in kq:
             st.caption(f"{gd.so(len(kq['sv']))} sinh viên · {gd.so(len(kq['lop']))} lớp học phần")
         st.markdown("## Các mức năng lực")
@@ -484,16 +562,26 @@ def main() -> None:
     st.markdown('<div class="phu-de">Phát hiện lớp chấm điểm bất thường · Hiệu chỉnh điểm cho công bằng · '
                 'Xếp mức năng lực theo điểm đã hiệu chỉnh</div>', unsafe_allow_html=True)
     vai_tro = chon_vai_tro()
+    if "thong_bao" in st.session_state:  # thông báo sau khi reset/phân tích (trang vừa được tải lại)
+        st.success(st.session_state.pop("thong_bao"))
     kq = doc_ket_qua(str(KET_QUA), dau_thoi_gian(KET_QUA))
-    if "sv" not in kq:
-        st.error("Chưa có kết quả phân tích để hiển thị. Hãy chạy bước phân tích trước "
-                 "(lệnh: .venv/Scripts/python.exe -X utf8 03_ma-nguon/run_gp3.py), rồi tải lại trang này.")
-        st.caption(f"Thư mục kết quả đang tìm: {KET_QUA}")
+    co_du_lieu = "sv" in kq
+
+    if not co_du_lieu:  # dashboard trống (đã reset, hoặc chưa phân tích lần nào)
+        if vai_tro == CONG_KHAI:
+            gd.tom_tat("Hiện chưa có dữ liệu phân tích. Dashboard sẽ hiển thị khi nhà trường tải dữ liệu điểm lên.")
+            return
+        t = st.tabs(["Phân tích dữ liệu mới", "Lịch sử phân tích"])
+        with t[0]:
+            trang_du_lieu_moi(False)
+        with t[1]:
+            trang_lich_su()
         return
+
     thong_tin_thanh_ben(kq)
     ten_tab = ["Tổng quan", "Lớp học phần", "Hiệu chỉnh điểm"]
     if vai_tro == NHA_TRUONG:
-        ten_tab += ["Tra cứu sinh viên", "Phân tích dữ liệu mới"]
+        ten_tab += ["Tra cứu sinh viên", "Phân tích dữ liệu mới", "Lịch sử phân tích"]
     tabs = st.tabs(ten_tab)
     with tabs[0]:
         trang_tong_quan(kq, vai_tro)
@@ -505,7 +593,10 @@ def main() -> None:
         with tabs[3]:
             trang_tra_cuu(kq)
         with tabs[4]:
-            trang_du_lieu_moi()
+            trang_du_lieu_moi(True)
+        with tabs[5]:
+            trang_lich_su()
 
 
 main()
+

@@ -4,9 +4,9 @@ Cách chạy (từ thư mục gốc dự án):
     .venv/Scripts/python.exe -X utf8 03_ma-nguon/run_gp3.py                (dữ liệu thật)
     .venv/Scripts/python.exe -X utf8 03_ma-nguon/run_gp3.py --kiem-chung   (+ mô phỏng cả 3 giải pháp, ~3 phút)
 
-Ghi vào 01_du-lieu/ket-qua/gp1, gp2, gp3 (không đưa lên GitHub). Màn hình chỉ in số liệu
-tổng hợp. Không có --kiem-chung thì các bảng kiểm chứng cũ bị xóa, vì chúng không còn khớp
-với kết quả vừa tạo lại. Sau đó mở dashboard:
+Ghi vào 01_du-lieu/ket-qua/gp1, gp2, gp3 (không đưa lên GitHub) và lưu một bản vào
+01_du-lieu/lich-su-phan-tich/; kết quả đang dùng trước đó được cất vào lịch sử trước khi ghi đè.
+Màn hình chỉ in số liệu tổng hợp. Sau đó mở dashboard:
     .venv/Scripts/streamlit.exe run 03_ma-nguon/dashboard/app.py
 """
 
@@ -19,42 +19,20 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
+import kho_ket_qua as kho  # noqa: E402
 from eda import config as cf  # noqa: E402
 from eda.load import doc_du_lieu_diem  # noqa: E402
-from gp1 import cau_hinh as ch1, xuat as x1  # noqa: E402
+from gp1 import cau_hinh as ch1  # noqa: E402
 from gp1.du_lieu import chuan_bi  # noqa: E402
 from gp1.kiem_chung import kiem_chung as kiem_chung_gp1  # noqa: E402
-from gp2 import cau_hinh as ch2, xuat as x2  # noqa: E402
+from gp2 import cau_hinh as ch2  # noqa: E402
 from gp2.kiem_chung import kiem_chung_gp2  # noqa: E402
-from gp3 import cau_hinh as ch3, xuat as x3  # noqa: E402
+from gp3 import cau_hinh as ch3  # noqa: E402
 from gp3.kiem_chung import kiem_chung_gp3  # noqa: E402
 from gp3.quy_trinh import chay_gp3  # noqa: E402
 
-THU_MUC_KET_QUA = cf.THU_MUC_GOC / "01_du-lieu" / "ket-qua"
-
-
-def ghi_tat_ca(kq: dict, kc: dict | None, cfg1, cfg2, cfg3, goc: Path) -> None:
-    """Ghi kết quả của cả 3 giải pháp vào goc/gp1, goc/gp2, goc/gp3.
-
-    Tham số:
-        kq: kết quả chay_gp3();
-        kc: bảng kiểm chứng của từng giải pháp {"gp1": ..., "gp2": ..., "gp3": ...}, hoặc None;
-        cfg1-3: cấu hình; goc: thư mục gốc.
-    Vì sao cần: dashboard đọc đủ 3 thư mục; chạy một lệnh là có đủ dữ liệu cho dashboard,
-    và kết quả kiểm chứng (nếu có) luôn khớp với kết quả chính.
-    """
-    kc = kc or {}
-    t1, t2, t3 = goc / "gp1", goc / "gp2", goc / "gp3"
-    hs, (xh, doc) = x1.diem_nong(kq["kq_gp1"]), x1.xu_huong(kq["kq_gp1"])
-    h1 = x1.ve_bieu_do(kq["kq_gp1"], kq["diem_lop"], kq["ds_moc"], xh, t1 / "charts")
-    x1.ghi_ket_qua(kq["kq_gp1"], hs, xh, doc, kc.get("gp1"), cfg1, t1)
-    x1.ghi_bao_cao(kq["kq_gp1"], hs, doc, kc.get("gp1"), kq["b"], h1, t1)
-    h2 = x2.ve_bieu_do(kq["sv"], kq["lop"], t2 / "charts")
-    x2.ghi_ket_qua(kq, kc.get("gp2"), cfg2, t2)
-    x2.ghi_bao_cao(kq, kc.get("gp2"), h2, t2)
-    h3 = x3.ve_bieu_do(kq["phan_loai"], t3 / "charts")
-    x3.ghi_ket_qua(kq, kc.get("gp3"), cfg3, t3)
-    x3.ghi_bao_cao(kq, kc.get("gp3"), h3, t3)
+THU_MUC_KET_QUA = kho.THU_MUC_KET_QUA
+ghi_tat_ca = kho.ghi_tat_ca  # giữ tên cũ cho code/tài liệu đang gọi run_gp3.ghi_tat_ca
 
 
 def main() -> None:
@@ -99,8 +77,13 @@ def main() -> None:
         kc["gp3"] = kiem_chung_gp3(d, kq, cfg1, cfg2, cfg3)
 
     print("4) Ghi kết quả 3 giải pháp ...")
-    ghi_tat_ca(kq, kc, cfg1, cfg2, cfg3, a.ra)
-    print(f"   Đã ghi vào {a.ra} (gp1, gp2, gp3)")
+    lich_su = kho.thu_muc_lich_su(a.ra)
+    kho.luu_lich_su(a.ra, lich_su)  # cất kết quả đang dùng (nếu có) vào lịch sử trước khi ghi đè
+    kho.xoa_ket_qua(a.ra)
+    kho.ghi_tat_ca(kq, kc, cfg1, cfg2, cfg3, a.ra)
+    kho.ghi_thong_tin(a.ra, a.du_lieu.name, kho.CACH_LENH, str(a.du_lieu.resolve()), kho.tom_tat_kq(kq))
+    kho.luu_lich_su(a.ra, lich_su)  # mọi lần phân tích đều có trong lịch sử
+    print(f"   Đã ghi vào {a.ra} (gp1, gp2, gp3) và lưu vào lịch sử {lich_su}")
     print(f"Xong trong {time.perf_counter() - bat_dau:.1f} giây.")
 
 
