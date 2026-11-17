@@ -585,10 +585,18 @@ def main() -> None:
     tabs = st.tabs(ten_tab)
     with tabs[0]:
         trang_tong_quan(kq, vai_tro)
+    # Viết if/else thường, không viết "a if ... else b": Streamlit tự hiện kết quả của biểu thức
+    # đứng một mình (magic), nên dạng rút gọn làm trang hiện thêm chữ "None".
     with tabs[1]:
-        trang_lop(kq, vai_tro) if "lop" in kq else st.info("Chưa có kết quả về lớp học phần.")
+        if "lop" in kq:
+            trang_lop(kq, vai_tro)
+        else:
+            st.info("Chưa có kết quả về lớp học phần.")
     with tabs[2]:
-        trang_hieu_chinh(kq, vai_tro) if "hieu_chinh" in kq else st.info("Chưa có kết quả hiệu chỉnh điểm.")
+        if "hieu_chinh" in kq:
+            trang_hieu_chinh(kq, vai_tro)
+        else:
+            st.info("Chưa có kết quả hiệu chỉnh điểm.")
     if vai_tro == NHA_TRUONG:
         with tabs[3]:
             trang_tra_cuu(kq)
