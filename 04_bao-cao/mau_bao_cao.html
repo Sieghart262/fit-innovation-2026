@@ -229,19 +229,23 @@ figcaption { font-size: 8.5pt; color: var(--phu); margin-top: 2pt; text-align: l
 
 <!-- ============================ 5. HỆ THỐNG ============================ -->
 <h2>5. Sản phẩm, khả năng mở rộng và bảo mật</h2>
+<div class="hop">
+<p style="text-align:left"><b>Mã nguồn:</b> <a href="https://github.com/Sieghart262/fit-innovation-2026">github.com/Sieghart262/fit-innovation-2026</a> (hướng dẫn trong <code>README.md</code>). Repo công khai để Ban tổ chức tiện kiểm tra và để triển khai demo; không chứa dữ liệu của Ban tổ chức hay kết quả tính từ dữ liệu đó.</p>
+<p style="text-align:left"><b>Demo trực tuyến:</b> <a href="https://neu-tci-demo.streamlit.app/">neu-tci-demo.streamlit.app</a>, khởi động trống. Đăng nhập vai trò Nhà trường (mật khẩu trong file <code>thong-tin-demo.txt</code> gửi kèm bài nộp), mở tab "Phân tích dữ liệu mới", tải lên file CSV 19 cột hoặc bấm "Phân tích dữ liệu mẫu" (dữ liệu giả).</p>
+</div>
 <ul>
   <li><b>Kiến trúc:</b> Python (pandas, SciPy, scikit-learn), mỗi giải pháp là một gói riêng (<code>cau_hinh</code>, <code>quy_trinh</code>, <code>kiem_chung</code>, <code>xuat</code>). Mọi ngưỡng nằm ở một chỗ và được ghi vào file tham số đi kèm kết quả. Seed cố định: cùng dữ liệu luôn ra cùng kết quả.</li>
   <li><b>Dữ liệu lớn:</b> các phép tính theo cửa sổ năm dùng tổng cộng dồn (<i>n</i>, Σ<i>x</i>, Σ<i>x</i>²) thay vì lặp từng dòng. Thử trên bộ dữ liệu giả 105.989 dòng, 3.180 lớp (gấp gần 3 lần dữ liệu thật, đáp ứng yêu cầu n &gt; 10<sup>5</sup>), cả chuỗi GP1 → GP2 → GP3 chạy xong trong khoảng 66 giây trên một máy tính cá nhân.</li>
-  <li><b>Dashboard (Streamlit), hai vai trò:</b> <i>Công khai</i> chỉ thấy số liệu tổng hợp, nhóm dưới 5 sinh viên hiện "&lt;5", không có bảng từng lớp; <i>Nhà trường</i> (có mật khẩu) xem danh sách lớp kèm lý do, tra cứu sinh viên kèm lời giải thích, tải file điểm mới (phân tích riêng hoặc gộp), xem lịch sử các lần phân tích và tải báo cáo HTML/ZIP. Biểu đồ Trước/Sau có ở mọi trang.</li>
+  <li><b>Dashboard (Streamlit), hai vai trò:</b> <i>Công khai</i> chỉ thấy số liệu tổng hợp, nhóm dưới 5 sinh viên hiện "&lt;5", không có bảng từng lớp; <i>Nhà trường</i> (có mật khẩu) xem danh sách lớp kèm lý do, tra cứu sinh viên kèm lời giải thích, tải file điểm mới (phân tích riêng hoặc gộp), xem lịch sử phân tích và tải báo cáo HTML/ZIP.</li>
   <li><b>Tích hợp Smart Campus:</b> đầu vào là một file CSV 19 cột theo đúng định dạng của Ban tổ chức; đầu ra là các bảng CSV (xếp hạng lớp, điểm hiệu chỉnh, phân loại sinh viên) nên nhập được vào hệ thống quản lý đào tạo. Có hướng dẫn và file bấm đúp cho người không biết lập trình.</li>
-  <li><b>Bảo mật dữ liệu:</b> dữ liệu và kết quả nằm trong thư mục bị loại khỏi Git; một module kiểm tra riêng tư chặn mọi bảng còn Mã SV hoặc có nhóm dưới 5 người trước khi xuất; bản demo công khai chỉ dùng dữ liệu giả sinh ngẫu nhiên.</li>
+  <li><b>Bảo mật dữ liệu:</b> dữ liệu và kết quả nằm trong thư mục bị loại khỏi Git; module kiểm tra riêng tư chặn mọi bảng còn Mã SV hoặc có nhóm dưới 5 người trước khi xuất; bản demo công khai có dữ liệu mẫu giả và cảnh báo không tải dữ liệu thật.</li>
 </ul>
 
 <h2>6. Hạn chế và hướng phát triển</h2>
 <ul>
   <li><b>Độ nhạy thấp khi chỉ KTTX bị chấm rộng tay</b> ({{kc1_kttx_rong}} trong mô phỏng). Hướng phát triển: dùng điểm Thi làm "neo" và so phân phối KTTX riêng, thay vì chỉ qua HP.</li>
   <li><b>TCI chỉ gỡ được một phần sai lệch,</b> vì hệ thống ưu tiên không sửa oan. Nhà trường có thể nới các ngưỡng trong file cấu hình nếu muốn hiệu chỉnh mạnh hơn.</li>
-  <li><b>Cờ <code>REVIEW_REQUIRED</code> ({{pt_review}} lượt điểm) gần với mức kỳ vọng do ngẫu nhiên</b> của khoảng tin cậy 95%: ở mức từng sinh viên, dữ liệu (trung vị 3 môn) chưa đủ để tách điểm bất thường khỏi dao động bình thường. Cờ này chỉ nên dùng làm danh sách tham khảo.</li>
+  <li><b>Cờ <code>REVIEW_REQUIRED</code> ({{pt_review}} lượt điểm) gần với mức kỳ vọng do ngẫu nhiên</b> của khoảng tin cậy 95%, vì mỗi sinh viên chỉ có trung vị 3 môn; cờ này chỉ nên dùng để tham khảo.</li>
   <li><b>Năng lực nền bị giới hạn bởi số môn của mỗi sinh viên.</b> Khi có thêm điểm đầu vào hoặc điểm các khoa khác, chỉ cần bổ sung vào bước tính năng lực nền, các bước sau giữ nguyên.</li>
 </ul>
 
