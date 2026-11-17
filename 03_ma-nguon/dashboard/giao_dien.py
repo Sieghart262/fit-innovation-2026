@@ -31,6 +31,8 @@ NHAN_VIET = {
     ch1.CHUA_DU: "Dữ liệu chưa đầy đủ",
     ch1.KHONG_MOC: "Không đủ lớp để so sánh",
 }
+# Tên đầy đủ: 3 nhãn bất thường của đề hiện kèm mã gốc để dễ đối chiếu với đề bài.
+TEN_NHAN = {ma: (f"{viet} ({ma})" if ma in ch1.NHAN_BAT_THUONG else viet) for ma, viet in NHAN_VIET.items()}
 GIAI_THICH_NHAN = {
     ch1.HIGH: "Điểm lớp cao hơn hẳn các lớp tương đương, và có bằng chứng do cách chấm.",
     ch1.STEEP: "Điểm lớp thấp hơn hẳn các lớp tương đương, và có bằng chứng do cách chấm.",

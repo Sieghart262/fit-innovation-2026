@@ -132,7 +132,7 @@ def bieu_do_phan_phoi(sv: pd.DataFrame) -> alt.Chart:
 def bieu_do_nhan(dem: pd.DataFrame) -> alt.Chart:
     """Thanh ngang: số lớp theo từng kết luận của Giải pháp 1 (một màu, có số ở cuối thanh)."""
     goc = alt.Chart(dem).encode(
-        y=alt.Y("Kết luận:N", sort=list(dem["Kết luận"]), title=None, axis=alt.Axis(labelLimit=260, labelFontSize=13)),
+        y=alt.Y("Kết luận:N", sort=list(dem["Kết luận"]), title=None, axis=alt.Axis(labelLimit=420, labelFontSize=13)),
         x=alt.X("Số lớp:Q", title="Số lớp học phần"))
     thanh = goc.mark_bar(cornerRadiusEnd=4, color=gd.MAU_CHINH, height=20).encode(tooltip=["Kết luận", "Số lớp", "Ý nghĩa"])
     chu = goc.mark_text(align="left", dx=6, fontSize=12, color=gd.MUC_PHU).encode(text="Số lớp:Q")
@@ -208,9 +208,10 @@ def trang_lop(kq: dict, vai_tro: str) -> None:
     """
     lop = kq["lop"]
     so_lop = lop["anomaly_type"].value_counts()
-    dem = pd.DataFrame({"Mã": [n for n in THU_TU_NHAN if so_lop.get(n, 0) > 0]})
-    dem["Kết luận"] = dem["Mã"].map(gd.NHAN_VIET)
-    dem["Số lớp"] = dem["Mã"].map(so_lop).astype(int)
+    # 3 nhãn bất thường của đề LUÔN hiện, kể cả khi 0 lớp, để người xem biết hệ thống có kiểm tra đủ cả ba.
+    dem = pd.DataFrame({"Mã": [n for n in THU_TU_NHAN if n in ch1.NHAN_BAT_THUONG or so_lop.get(n, 0) > 0]})
+    dem["Kết luận"] = dem["Mã"].map(gd.TEN_NHAN)
+    dem["Số lớp"] = dem["Mã"].map(so_lop).fillna(0).astype(int)
     dem["Ý nghĩa"] = dem["Mã"].map(gd.GIAI_THICH_NHAN)
     bat = int(lop["anomaly_type"].isin(ch1.NHAN_BAT_THUONG).sum())
     xem_xet = int(so_lop.get(ch1.REVIEW, 0))
@@ -232,11 +233,11 @@ def trang_lop(kq: dict, vai_tro: str) -> None:
 
     st.subheader("Danh sách lớp")
     c = st.columns([3, 2, 2])
-    mac_dinh = [gd.NHAN_VIET[n] for n in ch1.NHAN_BAT_THUONG if so_lop.get(n, 0) > 0]
+    mac_dinh = [gd.TEN_NHAN[n] for n in ch1.NHAN_BAT_THUONG]
     chon = c[0].multiselect("Kết luận", list(dem["Kết luận"]), default=mac_dinh)
     nam = c[1].selectbox("Năm học", ["Tất cả"] + sorted(lop["year"].dropna().unique()))
     mon = c[2].selectbox("Mã môn", ["Tất cả"] + sorted(lop["course"].dropna().unique()))
-    bang = lop.assign(ket_luan=lop["anomaly_type"].map(gd.NHAN_VIET))
+    bang = lop.assign(ket_luan=lop["anomaly_type"].map(gd.TEN_NHAN))
     bang = bang[bang["ket_luan"].isin(chon)]
     if nam != "Tất cả":
         bang = bang[bang["year"] == nam]
@@ -264,7 +265,7 @@ def trang_lop(kq: dict, vai_tro: str) -> None:
         ma = st.selectbox("Chọn một lớp trong danh sách trên", list(bang["class_id"]))
         d = bang[bang["class_id"] == ma].iloc[0]
         st.markdown(f"**Lớp {d['class_id']}** · môn {d['course']} · {d['year']}, học kỳ {int(d['sem'])} · "
-                    f"{int(d['n_sv'])} sinh viên · kết luận: **{d['ket_luan']}** ({d['anomaly_type']})")
+                    f"{int(d['n_sv'])} sinh viên · kết luận: **{d['ket_luan']}**")
         cac_y = []
         for y in str(d["explanation"]).split("; "):  # ghép lại phần "z=…, q=…" thuộc về ý đứng trước
             if cac_y and y.startswith("z="):
