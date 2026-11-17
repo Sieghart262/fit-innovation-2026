@@ -9,6 +9,8 @@
 | **GP3** | Xếp mức năng lực thực chất | TCI (thang 4), 4 mức Advanced / Proficient / Intermediate / At-Risk, lời giải thích từng SV |
 | **Dashboard** | Xem và dùng kết quả trên trình duyệt | Biểu đồ trước/sau, tra cứu, tải dữ liệu mới, lịch sử, báo cáo HTML |
 
+> **Demo trực tuyến:** https://neu-tci-demo.streamlit.app/ (khởi động trống; đăng nhập vai trò Nhà trường rồi tải file điểm CSV lên, hoặc bấm "Phân tích dữ liệu mẫu" để thử bằng dữ liệu giả). **Mật khẩu vai trò Nhà trường** nằm trong file `thong-tin-demo.txt` gửi kèm bài nộp cho Ban tổ chức; file này không có trên GitHub.
+
 > **Người không biết lập trình:** đọc [HUONG-DAN-SU-DUNG.md](HUONG-DAN-SU-DUNG.md). Chỉ cần bấm đúp `cai-dat.bat` một lần, sau đó bấm đúp `mo-dashboard.bat` mỗi khi dùng.
 
 ## Quy tắc bắt buộc về dữ liệu
