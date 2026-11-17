@@ -1,0 +1,15 @@
+# Cấu hình giao diện dashboard (Streamlit đọc file này khi chạy từ thư mục gốc dự án).
+
+[theme]
+base = "light"                          # luôn dùng nền sáng, không theo chế độ tối của máy
+primaryColor = "#1c5cab"                # xanh dương đậm: nút bấm, tab đang chọn
+backgroundColor = "#f6f5f1"             # nền trang: trắng ngà, dịu mắt
+secondaryBackgroundColor = "#ffffff"    # thanh bên, ô nhập
+textColor = "#1b1b1a"
+font = "sans serif"
+
+[browser]
+gatherUsageStats = false                # không gửi thống kê sử dụng ra ngoài
+
+[client]
+toolbarMode = "minimal"                 # ẩn menu dành cho lập trình viên
