@@ -1,0 +1,281 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<title>Báo cáo kỹ thuật – FIT Innovation 2026</title>
+<style>
+@page { size: A4; margin: 17mm 18mm 16mm 18mm;
+  @bottom-center { content: counter(page); font: 9pt "Segoe UI", sans-serif; color: #5b6673; } }
+@page :first { @bottom-center { content: none; } }
+:root { --chu: #1f2933; --phu: #5b6673; --xanh: #2a78d6; --cam: #eb6834; --vien: #d5dae0; --nen: #f3f6f9; }
+html { background: #fff; }
+body { font-family: Cambria, "Times New Roman", serif; font-size: 10.5pt; line-height: 1.42; color: var(--chu); margin: 0; }
+h1, h2, h3, .bia, th, figcaption, .the { font-family: "Segoe UI", Arial, sans-serif; }
+h2 { font-size: 14pt; color: var(--xanh); margin: 14pt 0 5pt; padding-bottom: 2pt; border-bottom: 1.5pt solid var(--xanh); break-after: avoid; }
+h3 { font-size: 11pt; margin: 9pt 0 3pt; break-after: avoid; }
+p { margin: 3pt 0 5pt; text-align: justify; }
+ul, ol { margin: 2pt 0 5pt; padding-left: 16pt; }
+li { margin: 1pt 0; }
+code { font-family: Consolas, monospace; font-size: 9pt; background: var(--nen); padding: 0 2pt; border-radius: 2pt; }
+table { border-collapse: collapse; width: 100%; margin: 4pt 0 8pt; font-size: 9pt; break-inside: avoid; }
+th, td { border: 0.6pt solid var(--vien); padding: 2.5pt 4pt; vertical-align: top; text-align: left; }
+th { background: var(--nen); font-weight: 600; font-size: 8.5pt; }
+td.so, th.so { text-align: right; }
+.cheo { background: #e8f0fb; font-weight: 600; }
+figure { margin: 6pt 0 8pt; break-inside: avoid; text-align: center; }
+figure img { max-width: 100%; }
+figcaption { font-size: 8.5pt; color: var(--phu); margin-top: 2pt; text-align: left; }
+.ct { font-family: "Cambria Math", Cambria, serif; text-align: center; margin: 5pt 0; font-size: 11pt; }
+.hop { background: var(--nen); border-left: 3pt solid var(--xanh); padding: 5pt 8pt; margin: 6pt 0; break-inside: avoid; }
+.hop p { margin: 2pt 0; }
+.the { display: flex; gap: 6pt; margin: 6pt 0; }
+.the div { flex: 1; border: 0.6pt solid var(--vien); border-radius: 4pt; padding: 5pt 7pt; }
+.the b { display: block; font-size: 15pt; color: var(--xanh); }
+.the span { font-size: 8pt; color: var(--phu); }
+.trang-moi { break-before: page; }
+.nho { font-size: 8.5pt; color: var(--phu); }
+/* Trang bìa */
+.bia { height: 255mm; display: flex; flex-direction: column; justify-content: space-between; }
+.bia .tren { font-size: 10pt; color: var(--phu); text-transform: uppercase; letter-spacing: .5pt; line-height: 1.6; }
+.bia h1 { font-size: 21pt; line-height: 1.25; margin: 0 0 8pt; color: var(--chu); }
+.bia .phu-de { font-size: 12pt; color: var(--xanh); margin-bottom: 18pt; }
+.bia .loai { font-size: 11pt; color: var(--phu); border-top: 2pt solid var(--xanh); padding-top: 8pt; display: inline-block; }
+.bia table { width: auto; font-size: 11pt; break-inside: auto; }
+.bia td { border: none; padding: 2pt 14pt 2pt 0; }
+</style>
+</head>
+<body>
+
+<!-- ============================ TRANG BÌA ============================ -->
+<section class="bia">
+  <div class="tren">Trường Đại học Kinh tế Quốc dân<br>Khoa Công nghệ Thông tin<br>Cuộc thi FIT Innovation 2026 – Vòng Bán kết</div>
+  <div>
+    <div class="loai">Báo cáo kỹ thuật</div>
+    <h1>NEU Academic Integrity &amp; True Competency Analytics Platform</h1>
+    <div class="phu-de">Nền tảng phát hiện điểm bất thường, hiệu chỉnh điểm và đánh giá năng lực thực chất của sinh viên</div>
+    <table>
+      <tr><td><b>Đội thi</b></td><td>We are here for the free food</td></tr>
+      <tr><td><b>Thành viên</b></td><td>Nguyễn Hải Anh<br>Nguyễn Tuấn Anh<br>Tống Nhật Linh</td></tr>
+    </table>
+  </div>
+  <div class="tren">Hà Nội, tháng 11/2026</div>
+</section>
+
+<!-- ============================ TÓM TẮT ============================ -->
+<section class="trang-moi">
+<h2>Tóm tắt</h2>
+<p>Cùng một môn học, lớp này có thể nhiều điểm A hơn hẳn lớp kia chỉ vì cách chấm khác nhau. Khi đó GPA danh nghĩa không còn phản ánh đúng năng lực. Đội xây dựng một chuỗi ba giải pháp nối tiếp, chạy trên dữ liệu điểm của Ban tổ chức ({{so_lop}} lớp học phần, {{so_mon}} môn, {{n_sv}} sinh viên, 2019-2020 đến 2025-2026):</p>
+<ul>
+  <li><b>GP1 – Phát hiện lớp bất thường.</b> So mỗi lớp với các lớp thật sự tương đương (cùng môn, cùng loại lớp, cùng cơ cấu điểm, trong ±1 năm học). Một lớp chỉ bị gắn <code>HIGH_INFLATION</code> hay <code>UNUSUALLY_STEEP</code> khi <i>vừa lệch</i> so với mốc <i>vừa có bằng chứng độc lập</i> rằng độ lệch đến từ cách chấm, không phải từ sinh viên giỏi hay yếu thật. Kết quả: {{n_bat_thuong}} lớp mang một trong ba nhãn của đề ({{pt_bat_thuong}}), {{n_NEEDS_REVIEW}} lớp chỉ cần xem xét.</li>
+  <li><b>GP2 – Hiệu chỉnh điểm.</b> Chỉ sửa điểm ở {{n_lop_sua}} lớp có đủ bằng chứng, theo công thức chiết khấu <i>α</i> của đề, lấy phần lệch một cách thận trọng và giới hạn ±2 điểm. Điểm kỳ vọng từng sinh viên với khoảng tin cậy 95% chỉ dùng để gắn cờ <code>REVIEW_REQUIRED</code>, không tự đổi điểm.</li>
+  <li><b>GP3 – Năng lực thực chất (TCI).</b> Quy đổi điểm đã hiệu chỉnh sang thang 4 theo quy chế NEU, xếp bốn mức theo ngưỡng của đề, kèm độ tin cậy và lời giải thích riêng cho từng sinh viên. {{n_doi_muc}} sinh viên đổi mức ({{n_xuong_muc}} xuống, {{n_len_muc}} lên).</li>
+</ul>
+<p>Mọi bước được kiểm chứng bằng mô phỏng: cài bất thường biết trước vào 25 lớp đang bình thường, chạy lại cả chuỗi và đo xem hệ thống có bắt đúng không. Hệ thống bắt {{kc1_lam_phat}} lớp bị cài "chấm dễ", trong khi chỉ {{kc1_gioi_sua_oan}} lớp có sinh viên giỏi thật bị sửa điểm oan, và tỷ lệ báo động giả ở các lớp khác không quá {{kc1_bao_dong_gia_max}}. Toàn bộ kết quả được đưa lên một dashboard có phân quyền công khai / nhà trường.</p>
+
+<div class="hop">
+<p><b>Nguyên tắc thiết kế xuyên suốt:</b> (1) không bao giờ so với "toàn trường", chỉ so với lớp tương đương; (2) <b>thà bỏ sót còn hơn sửa oan</b> – một lớp chỉ bị sửa điểm khi có bằng chứng độc lập; (3) mọi nhãn, mọi con số đều kèm lời giải thích đọc được; (4) dữ liệu không rời khỏi máy, số liệu công bố ẩn mọi nhóm dưới 5 người.</p>
+</div>
+
+<!-- ============================ 1. DỮ LIỆU ============================ -->
+<h2>1. Bài toán và dữ liệu</h2>
+<h3>1.1. Dữ liệu và cách xử lý</h3>
+<p>Mỗi dòng là điểm của một sinh viên trong một lớp học phần: chuyên cần (CC), điểm quá trình (KTTX, do giảng viên lớp tự chấm), điểm thi cuối kỳ (Thi, do hai giảng viên chấm) và điểm học phần (HP, thang 10). Dữ liệu không có điểm đầu vào, ngành học hay giảng viên. Một hàm đọc duy nhất (<code>doc_du_lieu_diem</code>) xử lý mã hóa, chuẩn hóa Unicode, chuyển kiểu và đếm ô lỗi ở cả 19 cột; bộ kiểm thử cài lỗi vào từng cột cho kết quả 43/43 lỗi được phát hiện. Các quy ước chính:</p>
+<ul>
+  <li><b>Lượt vắng thi</b> (HP = 0, Thi trống hoặc 0) không được coi là điểm năng lực: loại khỏi thống kê lớp, GPA và TCI.</li>
+  <li><b>Lớp "chỉ có Thi"</b> (dưới 50% sinh viên có CC/KTTX) chỉ so với lớp cùng cơ cấu; nếu HP &lt; 0,9 × Thi thì coi là <i>chưa nhập điểm quá trình</i> (<code>INCOMPLETE_DATA</code>), không coi là ép điểm.</li>
+  <li><b>Đồ án / thực tập / khóa luận</b> chỉ so với nhau; lớp có ≤ 5 điểm hợp lệ vẫn có trong kết quả nhưng mang nhãn <code>INSUFFICIENT_DATA</code> và giữ nguyên điểm.</li>
+</ul>
+
+<h3>1.2. Ba phát hiện từ khám phá dữ liệu quyết định thiết kế</h3>
+<ol>
+  <li><b>Ngưỡng cố định "trên 60% điểm A" không dùng được.</b> Điểm tăng dần qua các năm: {{pt_tren60_A}} lớp thường ({{n_tren60_A}} lớp) vượt 60% điểm A, phần lớn ở các năm gần đây (Hình 1). Nếu dùng ngưỡng cố định, hơn một phần ba số lớp năm 2025-2026 sẽ bị gắn cờ, trong khi tỷ lệ lớp bị GP1 gắn nhãn giữ ổn định quanh 7–12% mỗi năm. GP1 vì thế dùng <b>ngưỡng tương đối</b> so với lớp tương đương.</li>
+  <li><b>Điểm tăng chung chủ yếu do khác môn, không do lạm phát trong môn.</b> Sau khi đổi trọng số (HK2 2021-22), HP toàn trường tăng 0,43 điểm, nhưng so trong cùng một môn chỉ tăng 0,016 điểm (Wilcoxon, p = 0,83). Mốc so sánh vì thế phải là cùng môn và cùng giai đoạn, không phải toàn trường.</li>
+  <li><b>Mỗi sinh viên chỉ có ít môn trong dữ liệu</b> (trung vị 3 môn). "Năng lực nền" chỉ tin cậy được với một phần sinh viên, nên cần co rút, đặt số lớp tối thiểu và ghi độ tin cậy.</li>
+</ol>
+<figure><img src="hinh/h1_nguong_co_dinh.png">
+<figcaption><b>Hình 1.</b> Tỷ lệ lớp thường bị gắn cờ theo năm học: ngưỡng cố định 60% điểm A (cam) so với GP1 (xanh). Đơn vị là lớp; không có số liệu từng sinh viên.</figcaption></figure>
+
+<!-- ============================ 2. GP1 ============================ -->
+<h2>2. Giải pháp 1 – Phát hiện lớp học phần bất thường</h2>
+<p>Quy trình gồm sáu bước: làm sạch → xác định tình trạng dữ liệu của lớp → tính năng lực nền → tính đặc trưng lớp → so với mốc → chấm điểm và gắn nhãn.</p>
+
+<h3>2.1. Năng lực nền của sinh viên (leave-one-class-out)</h3>
+<p>Đề không định nghĩa "năng lực nền", đội tự xây từ dữ liệu. Trước hết chuẩn hóa mỗi lượt điểm theo môn trong cửa sổ ±1 năm học và cùng cơ cấu điểm, để bỏ chênh lệch độ khó giữa các môn và xu hướng tăng theo thời gian:</p>
+<div class="ct"><i>z</i><sub><i>ic</i></sub> = (<i>X</i><sub><i>ic</i></sub> − <i>μ</i><sub>môn, ±1 năm</sub>) / max(<i>σ</i><sub>môn, ±1 năm</sub>, 0,3)</div>
+<p>Năng lực nền của sinh viên <i>i</i> khi xét lớp <i>c</i> chỉ dùng <b>các lớp khác</b> (không dùng chính điểm lớp đang bị đánh giá):</p>
+<div class="ct"><i>A</i><sub><i>i</i>,−<i>c</i></sub> = Σ<sub><i>k</i>≠<i>c</i></sub> <i>z</i><sub><i>ik</i></sub> / (<i>n</i><sub><i>i</i>,−<i>c</i></sub> + <i>λ</i>), &nbsp;&nbsp; <i>λ</i> = 1, chỉ tính khi <i>n</i><sub><i>i</i>,−<i>c</i></sub> ≥ 2</div>
+<p>Hệ số co rút <i>λ</i> kéo sinh viên có ít lớp về 0. Ngoài bản co rút, hệ thống giữ bản không co rút <i>A</i><sup>raw</sup> (chia cho <i>n</i>) để làm bằng chứng E1: co rút ở đó sẽ trừ thiếu phần giỏi thật và làm lớp có sinh viên giỏi bị nghi oan.</p>
+
+<h3>2.2. Mốc so sánh</h3>
+<p>Mỗi lớp chỉ được so với các lớp <b>cùng loại</b> (đồ án với đồ án), <b>cùng cơ cấu điểm</b>, <b>trong ±1 năm học</b>. Mốc chính là các lớp khác <b>cùng môn</b> (cần ≥ 3 lớp). Mốc phụ là các lớp của môn khác <b>cùng nhóm môn</b>, dùng khi môn có quá ít lớp, hoặc khi cả môn lệch so với nhóm (môn dễ ở mọi lớp) mà lớp đang xét không lệch trong môn. Không đủ cả hai mốc thì gắn <code>NO_REFERENCE</code> thay vì so với toàn trường. Trên dữ liệu thật: {{n_co_moc}} lớp có mốc ({{n_moc_mon}} cùng môn, {{n_moc_nhom}} cùng nhóm môn), {{n_NO_REFERENCE}} lớp không đủ mốc.</p>
+
+<h3>2.3. Bước 1 – Lớp có lệch so với mốc không?</h3>
+<ul>
+  <li><b>Lệch điểm trung bình:</b> z-score bền vững giữa các lớp, dùng trung vị và MAD để vài lớp lạ trong mốc không kéo lệch mốc:
+  <div class="ct"><i>z</i><sub>c</sub> = (<i>x̄</i><sub>c</sub> − med(<i>x̄</i><sub>mốc</sub>)) / max(1,4826 · MAD(<i>x̄</i><sub>mốc</sub>), 0,2)</div>
+  kèm kiểm định Welch t giữa điểm lớp và điểm gộp của mốc. Do kiểm định hàng trăm lớp cùng lúc, p-value được hiệu chỉnh Benjamini–Hochberg (FDR 5%); lớp chưa có ý nghĩa thống kê bị giảm nửa điểm lệch.</li>
+  <li><b>Tỷ lệ điểm A và tỷ lệ trượt:</b> biểu đồ kiểm soát p-chart thay cho ngưỡng 60% cố định: giới hạn trên = <i>p</i><sub>mốc</sub> + 3·√(<i>p</i><sub>mốc</sub>(1 − <i>p</i><sub>mốc</sub>)/<i>n</i><sub>c</sub>). Lớp nhỏ có giới hạn rộng hơn, nên không bị gắn cờ chỉ vì dao động ngẫu nhiên.</li>
+</ul>
+<p>Mỗi chỉ số được đưa về thang 0–1 bằng hàm sigmoid (bằng 0,5 khi |<i>z</i>| = 2). Điểm lệch lên là <i>D</i><sup>↑</sup> = max(<i>s</i><sub>TB↑</sub>, <i>s</i><sub>A</sub>), tương tự <i>D</i><sup>↓</sup> với tỷ lệ trượt. Lớp được coi là <b>lệch</b> khi <i>D</i> ≥ 0,5.</p>
+
+<h3>2.4. Bước 2 – Có bằng chứng độc lập rằng độ lệch do cách chấm không?</h3>
+<p>Đây là điểm khác biệt chính của giải pháp. Một lớp điểm cao có thể là lớp chấm dễ, nhưng cũng có thể là lớp tập trung sinh viên giỏi. Đội dùng ba loại bằng chứng:</p>
+<table>
+<tr><th style="width:17%">Bằng chứng</th><th>Cách đo</th><th style="width:28%">Vì sao là bằng chứng về cách chấm</th></tr>
+<tr><td><b>E1</b> Năng lực nền</td><td>Phần chênh trung bình của lớp sau khi trừ năng lực nền: <i>r</i><sub>c</sub> = mean<sub><i>i</i>∈<i>c</i></sub>(<i>z</i><sub><i>ic</i></sub> − <i>A</i><sup>raw</sup><sub><i>i</i>,−<i>c</i></sub>), rồi lấy robust z của <i>r</i><sub>c</sub> so với mốc. Cần ≥ 5 SV và ≥ 30% SV của lớp có năng lực nền. <b>Chỉ dùng khi mốc là cùng môn.</b></td><td>Sinh viên giỏi thật thì giỏi ở mọi lớp, nên <i>r</i><sub>c</sub> ≈ 0. Nếu cùng những sinh viên đó cao vọt chỉ ở lớp này, độ lệch thuộc về lớp.</td></tr>
+<tr><td><b>E2</b> KTTX − Thi</td><td>Chênh lệch KTTX − Thi của lớp vượt mức thường của mốc ≥ 1,0 điểm <b>và đúng chiều</b>: lớp lệch lên phải có KTTX cao hơn Thi nhiều hơn mức thường; lớp lệch xuống thì ngược lại.</td><td>KTTX do giảng viên lớp tự chấm, Thi do hai giảng viên chấm độc lập. Lệch ngược chiều không phải bằng chứng.</td></tr>
+<tr><td><b>E3</b> Phân phối biến dạng</td><td>Gộp kiểu noisy-OR: σ &lt; 60% σ mốc (hoặc σ &lt; 0,5); tỷ lệ KTTX trùng y hệt Thi; tương quan Spearman với năng lực nền gần 0; trên 30% SV cùng một mức điểm; kiểm định KS hình dạng phân phối. Bỏ qua dồn điểm và hình dạng khi điểm sát trần 10.</td><td>Cho điểm đồng loạt, chép KTTX từ Thi hay xáo trộn điểm làm phân phối khác hẳn lớp tương đương.</td></tr>
+</table>
+<p>Độ mạnh bằng chứng theo chiều lên: <i>E</i><sup>↑</sup> = 1 − (1 − <i>e</i><sub>1</sub><sup>↑</sup>)(1 − <i>e</i><sub>2</sub><sup>↑</sup>)(1 − <i>e</i><sub>3</sub>), tương tự cho chiều xuống. Lớp "có bằng chứng" khi <i>E</i> ≥ 0,5.</p>
+
+<h3>2.5. Bước 3 – Anomaly Score và nhãn</h3>
+<p>Điểm thành phần của ba nhãn: <i>S</i><sub>HIGH</sub> = <i>D</i><sup>↑</sup>·<i>E</i><sup>↑</sup>, <i>S</i><sub>STEEP</sub> = <i>D</i><sup>↓</sup>·<i>E</i><sup>↓</sup>, <i>S</i><sub>DIST</sub> = 1 − (1 − <i>e</i><sub>3</sub>)(1 − 0,5·<i>e</i><sub>2</sub>). Điểm quy tắc lấy điểm lớn nhất và cộng thêm một phần điểm lớn thứ hai: <i>R</i> = 1 − (1 − <i>S</i><sub>(1)</sub>)(1 − 0,3·<i>S</i><sub>(2)</sub>). Để kiểm tra chéo, Isolation Forest (500 cây, 11 đặc trưng chuẩn hóa bền vững) cho điểm <i>M</i> ∈ [0, 1]:</p>
+<div class="ct"><b>Anomaly Score</b> = 0,8 · <i>R</i> + 0,2 · <i>M</i> &nbsp;∈ [0, 1]</div>
+<p>Quy tắc gắn nhãn theo thứ tự ưu tiên:</p>
+<table>
+<tr><th>Nhãn</th><th>Điều kiện</th><th class="so">Số lớp</th></tr>
+<tr><td><code>HIGH_INFLATION</code></td><td>Lệch lên (<i>D</i><sup>↑</sup> ≥ 0,5) <b>và</b> có bằng chứng (<i>E</i><sup>↑</sup> ≥ 0,5)</td><td class="so">{{n_HIGH_INFLATION}}</td></tr>
+<tr><td><code>UNUSUALLY_STEEP</code></td><td>Lệch xuống <b>và</b> có bằng chứng</td><td class="so">{{n_UNUSUALLY_STEEP}}</td></tr>
+<tr><td><code>SUSPICIOUS_DISTRIBUTION</code></td><td><i>S</i><sub>DIST</sub> ≥ 0,5</td><td class="so">{{n_SUSPICIOUS_DISTRIBUTION}}</td></tr>
+<tr><td><code>NEEDS_REVIEW</code></td><td>Lệch nhưng chưa có bằng chứng → chỉ xem xét, không sửa điểm</td><td class="so">{{n_NEEDS_REVIEW}}</td></tr>
+<tr><td><code>NORMAL</code></td><td>Không lệch, không biến dạng</td><td class="so">{{n_NORMAL}}</td></tr>
+<tr><td><code>NO_REFERENCE</code> / <code>INCOMPLETE_DATA</code> / <code>INSUFFICIENT_DATA</code></td><td>Không đủ mốc / chưa nhập điểm quá trình / ≤ 5 điểm hợp lệ</td><td class="so">{{n_NO_REFERENCE}} / {{n_INCOMPLETE_DATA}} / {{n_INSUFFICIENT_DATA}}</td></tr>
+</table>
+<p>Đầu ra cho GP2 là cột "đủ điều kiện hiệu chỉnh" (lớp thỏa điều kiện HIGH hoặc STEEP, kể cả khi đó là nhãn phụ) và hướng hiệu chỉnh (Giảm / Tăng). Mỗi lớp có lời giải thích sinh từ mẫu câu, nêu rõ lệch bao nhiêu so với mốc nào và bằng chứng nào đã được dùng.</p>
+
+<h3>2.6. Kết quả trên dữ liệu thật</h3>
+<figure><img src="hinh/h2_nhan_gp1.png">
+<figcaption><b>Hình 2.</b> Số lớp theo nhãn GP1. Ba nhãn của đề tô xanh; nhãn bổ sung của đội tô xám.</figcaption></figure>
+<p>{{n_bat_thuong}}/{{so_lop}} lớp mang nhãn bất thường; {{n_du_dk}} lớp đủ điều kiện hiệu chỉnh. Trong {{n_tren60_A}} lớp thường có trên 60% điểm A, chỉ {{n_tren60_A_high}} lớp bị gắn <code>HIGH_INFLATION</code>: phần còn lại có lớp tương đương cũng nhiều điểm A, hoặc không có bằng chứng về cách chấm. {{n_ca_hai}} lớp bất thường ({{pt_ca_hai}}) cũng bị Isolation Forest đánh giá khác thường, nghĩa là hai cách tiếp cận độc lập cùng chỉ ra. Theo yêu cầu bảo mật, báo cáo này không liệt kê từng lớp (từ mã lớp có thể suy ra giảng viên); danh sách đầy đủ kèm lý do chỉ có ở vai trò "Nhà trường" của dashboard.</p>
+
+<h3>2.7. Kiểm chứng bằng mô phỏng</h3>
+<p>Chọn ngẫu nhiên 25 lớp đang <code>NORMAL</code> (≥ 20 sinh viên, có điểm quá trình), cài một kiểu bất thường biết trước, chạy lại toàn bộ quy trình và so nhãn với đáp án (seed cố định 42):</p>
+<table>
+<tr><th>Kịch bản cài vào 25 lớp</th><th>Nhãn đúng</th><th class="so">Đúng nhãn</th><th class="so">Bị sửa điểm</th><th>Nên sửa?</th><th class="so">Báo động giả ở lớp khác</th></tr>
+{{bang_kc1}}
+</table>
+<p>Hệ thống bắt tốt các kiểu lệch rõ (chấm dễ, chấm khắt khe, nén điểm, chưa nhập điểm quá trình), trong khi chỉ {{kc1_gioi_sua_oan}} lớp có sinh viên giỏi thật bị sửa điểm và báo động giả ở các lớp không bị cài không quá {{kc1_bao_dong_gia_max}}. Hai kịch bản khó hơn là hoán vị điểm và giảng viên chỉ chấm KTTX rộng tay ({{kc1_kttx_rong}}): khi KTTX chiếm 20–40% HP, mức tăng HP nhỏ và dễ lẫn vào dao động bình thường. Đội chủ động chấp nhận đánh đổi này để giữ tỷ lệ sửa oan và báo động giả ở mức thấp.</p>
+
+<!-- ============================ 3. GP2 ============================ -->
+<h2>3. Giải pháp 2 – Hiệu chỉnh điểm</h2>
+<p>Đội kết hợp phương án (b) và (c) của đề: (b) sửa điểm cả lớp bằng hệ số chiết khấu, chỉ ở các lớp đủ điều kiện; (c) điểm kỳ vọng từng sinh viên, chỉ để gắn cờ. Phương án (a) chuẩn hóa z theo lớp không được chọn vì nó xóa luôn chênh lệch thật giữa các lớp (lớp giỏi thật sẽ bị kéo xuống trung bình).</p>
+
+<h3>3.1. Phương án A – Chiết khấu α theo lớp</h3>
+<div class="ct"><b>Adjusted_Score</b><sub><i>ic</i></sub> = <i>X</i><sub><i>ic</i></sub> − (1 − <i>α</i><sub>c</sub>) · Δ<sub>c</sub>, &nbsp;&nbsp; <i>α</i><sub>c</sub> = clip(1 − AnomalyScore<sub>c</sub>, 0,05; 1)</div>
+<ul>
+  <li><b>Δ<sub>c</sub> là phần lệch do cách chấm, lấy thận trọng:</b> mức nhỏ hơn giữa lệch thô (<i>x̄</i><sub>c</sub> − <i>x̄</i><sub>mốc</sub>) và lệch sau khi trừ năng lực nền ((<i>r</i><sub>c</sub> − med <i>r</i><sub>mốc</sub>) · <i>σ</i><sub>môn</sub>, chỉ khi mốc là cùng môn). Nếu năng lực nền giải thích hết độ lệch (hai đại lượng ngược dấu) thì Δ = 0.</li>
+  <li><b>Chỉ sửa đúng hướng nhãn</b> (Giảm thì Δ ≥ 0, Tăng thì Δ ≤ 0), và mỗi lớp không bị cộng/trừ quá <b>±2 điểm</b>.</li>
+  <li><b>Lớp không đủ điều kiện có α = 1</b>, giữ nguyên điểm. Thứ tự sinh viên trong cùng một lớp không đổi; điểm kẹp trong [0, 10]; lượt vắng thi giữ nguyên.</li>
+</ul>
+<p>Lớp càng bất thường (Anomaly Score cao) thì α càng nhỏ và càng gỡ nhiều phần lệch, đúng tinh thần "0 &lt; α ≤ 1, α giảm khi Anomaly Score tăng" của đề.</p>
+
+<h3>3.2. Phương án C – Điểm kỳ vọng và cờ REVIEW_REQUIRED</h3>
+<div class="ct"><i>X̂</i><sub><i>ic</i></sub> = <i>μ</i><sub>môn</sub> + <i>A</i><sup>raw</sup><sub><i>i</i>,−<i>c</i></sub> · <i>σ</i><sub>môn</sub>, &nbsp;&nbsp; SE<sub><i>ic</i></sub> = <i>σ</i><sub>w</sub> · √(1 + 1/<i>k</i><sub><i>i</i></sub>) · <i>σ</i><sub>môn</sub></div>
+<p><i>σ</i><sub>w</sub> là độ dao động điểm chuẩn hóa của một sinh viên giữa các môn, ước lượng từ toàn bộ dữ liệu theo E[<i>e</i>²] = <i>σ</i><sub>w</sub>²(1 + 1/<i>k</i>); <i>k</i><sub><i>i</i></sub> là số lớp khác của sinh viên (cần ≥ 2), ít lớp thì khoảng rộng hơn. Một lượt điểm bị gắn <code>REVIEW_REQUIRED</code> khi Adjusted_Score nằm ngoài <i>X̂</i> ± 1,96·SE <b>và</b> lệch <i>X̂</i> từ 1 điểm trở lên. Hệ thống đề xuất điểm bằng biên gần nhất của khoảng tin cậy nhưng <b>không tự đổi điểm</b>, vì ở mức một sinh viên chưa đủ bằng chứng để kết luận.</p>
+
+<h3>3.3. Kết quả và kiểm chứng</h3>
+<div class="the">
+<div><b>{{n_lop_sua}}</b><span>lớp được hiệu chỉnh ({{n_lop_tru}} trừ, {{n_lop_cong}} cộng)</span></div>
+<div><b>{{dc_tb}}</b><span>điểm thay đổi trung bình mỗi lớp (lớn nhất {{dc_max}})</span></div>
+<div><b>{{n_luot_sua}}</b><span>lượt điểm được hiệu chỉnh / {{n_luot}} lượt</span></div>
+<div><b>{{pt_review}}</b><span>lượt điểm gắn REVIEW_REQUIRED ({{n_review}} lượt)</span></div>
+</div>
+<figure><img src="hinh/h3_dich_chuyen_gp2.png">
+<figcaption><b>Hình 3.</b> Số điểm thay đổi ở {{n_lop_sua}} lớp được hiệu chỉnh (đơn vị: lớp). α của các lớp này nằm trong [{{alpha_min}}; {{alpha_max}}], trung bình {{alpha_tb}}; {{n_cham_tran}} lớp chạm giới hạn ±2 điểm.</figcaption></figure>
+<p>GPA hệ 10 (Normalized_GPA, mỗi môn lấy lần học có điểm cao nhất) thay đổi ở {{n_sv_gpa_doi}}/{{n_sv_gpa}} sinh viên, trung bình {{gpa10_doi_tb}} điểm ở những sinh viên có thay đổi. Kiểm chứng mô phỏng:</p>
+<table>
+<tr><th>Kịch bản cài vào 25 lớp</th><th class="so">Đã cài</th><th class="so">Lớp được hiệu chỉnh</th><th class="so">Đã trừ TB</th><th class="so">Phần cài được gỡ</th><th class="so">Thay đổi TB ở lớp không cài</th></tr>
+{{bang_kc2}}
+</table>
+<p>Hiệu chỉnh luôn đúng hướng và gỡ được khoảng một nửa phần sai lệch đã cài; các lớp không bị cài gần như không đổi. Việc chỉ gỡ một phần là chủ ý: α và Δ đều được chọn thận trọng để không sửa quá tay khi bằng chứng chưa tuyệt đối.</p>
+
+<!-- ============================ 4. GP3 ============================ -->
+<h2>4. Giải pháp 3 – Chỉ số năng lực thực chất TCI</h2>
+<h3>4.1. Công thức</h3>
+<p>TCI là trung bình có trọng số tín chỉ của điểm thang 4, quy đổi từ Adjusted_Score theo bảng của NEU. GPA danh nghĩa tính y hệt nhưng từ điểm HP gốc, nên hai chỉ số so sánh được trực tiếp:</p>
+<div class="ct"><b>TCI</b><sub><i>i</i></sub> = Σ<sub><i>m</i></sub> TC<sub><i>m</i></sub> · <i>g</i>(Adjusted_Score<sub><i>im</i></sub>) / Σ<sub><i>m</i></sub> TC<sub><i>m</i></sub></div>
+<table>
+<tr><th>Điểm thang 10</th><td>≥ 9,0</td><td>8,5–8,9</td><td>8,0–8,4</td><td>7,0–7,9</td><td>6,5–6,9</td><td>5,5–6,4</td><td>5,0–5,4</td><td>4,5–4,9</td><td>&lt; 4,5</td></tr>
+<tr><th>Điểm chữ / thang 4 (<i>g</i>)</th><td>A+ / 4,0</td><td>A / 4,0</td><td>B+ / 3,5</td><td>B / 3,0</td><td>C+ / 2,5</td><td>C / 2,0</td><td>D+ / 1,5</td><td>D / 1,0</td><td>F / 0</td></tr>
+</table>
+<ul>
+  <li><b>Mỗi môn lấy lần học có điểm cao nhất;</b> có tính đồ án, thực tập, khóa luận; không tính lượt vắng thi. Sinh viên không còn môn nào có điểm hợp lệ được ghi "Chưa đủ dữ liệu" ({{n_chua_du}} SV) thay vì bị xếp At-Risk oan.</li>
+  <li><b>Làm tròn "nửa lên"</b> (8,45 → 8,5 → A; 3,595 → 3,60) thay cho hàm <code>round</code> mặc định, vốn làm tròn về số chẵn và có thể hạ sai một bậc điểm chữ ở đúng ranh giới.</li>
+  <li><b>Xếp mức theo ngưỡng của đề:</b> Advanced ≥ 3,60; Proficient ≥ 3,20; Intermediate ≥ 2,50; còn lại At-Risk.</li>
+  <li><b>Độ tin cậy:</b> sinh viên có dưới 3 môn ghi "Thấp" ({{n_tin_cay_thap}} SV, {{pt_tin_cay_thap}}). TCI không bị co rút về trung bình, để chỉ số giữ nguyên ý nghĩa "điểm thang 4" mà nhà trường quen dùng.</li>
+</ul>
+
+<h3>4.2. Giải thích cho từng sinh viên (Explainable)</h3>
+<p>Mỗi sinh viên có một đoạn giải thích sinh tự động bằng mẫu câu (<b>không gọi AI bên ngoài</b>, dữ liệu không rời khỏi máy): GPA danh nghĩa và TCI, mức trước/sau, tối đa ba môn ảnh hưởng nhiều nhất kèm lý do của lớp đó ở GP1 (ví dụ: "lớp được xác định chấm rộng tay: điểm quá trình cao hơn điểm thi nhiều hơn các lớp tương đương"), số lượt có cờ <code>REVIEW_REQUIRED</code> và độ tin cậy. Nhờ vậy, phòng đào tạo trả lời được câu hỏi "vì sao mức của em thay đổi" mà không cần đọc mô hình.</p>
+
+<h3>4.3. Kết quả: GPA danh nghĩa và TCI</h3>
+<figure><img src="hinh/h4_gpa_vs_tci.png">
+<figcaption><b>Hình 4.</b> Trái: phân phối GPA danh nghĩa và TCI của {{n_sv_tci}} sinh viên (bước 0,25; {{so_khoang_an}} khoảng có 1–4 sinh viên được ẩn). Phải: số sinh viên theo mức trước và sau hiệu chỉnh.</figcaption></figure>
+<p>Hai phân phối gần như trùng nhau ở tổng thể (GPA danh nghĩa trung bình {{gpa_tb}}, TCI trung bình {{tci_tb}}): hiệu chỉnh chỉ tác động vào số ít lớp có bằng chứng, không làm dịch cả trường. Nhưng với từng sinh viên học các lớp đó, tác động là đáng kể: {{n_sv_tci_doi}} sinh viên có TCI khác GPA danh nghĩa (trung bình {{tci_doi_tb}} điểm thang 4), và {{n_doi_muc}} sinh viên ({{pt_doi_muc}}) đổi mức.</p>
+<table style="width:72%; margin-left:auto; margin-right:auto">
+<tr><th>Mức theo GPA danh nghĩa ↓ / theo TCI →</th><th class="so">Advanced</th><th class="so">Proficient</th><th class="so">Intermediate</th><th class="so">At-Risk</th></tr>
+{{bang_chuyen_muc}}
+</table>
+<p class="nho">Bảng 1. Ma trận chuyển mức (số sinh viên). Đường chéo: giữ nguyên mức. Ô có 1–4 sinh viên ghi "&lt;5".</p>
+<figure><img src="hinh/h5_chenh_tci.png">
+<figcaption><b>Hình 5.</b> Phân bố TCI − GPA danh nghĩa ở {{n_sv_tci_doi}} sinh viên có thay đổi. Phần âm: sinh viên từng học lớp chấm dễ; phần dương: từng học lớp chấm khắt khe.</figcaption></figure>
+
+<h3>4.4. Kiểm chứng: TCI có phản ánh năng lực thật không?</h3>
+<table>
+<tr><th>Kịch bản cài vào 25 lớp</th><th class="so">SV bị ảnh hưởng</th><th class="so">GPA danh nghĩa đổi TB</th><th class="so">TCI đổi TB</th><th>Tỷ lệ gỡ / giữ</th><th class="so">SV đổi mức danh nghĩa</th><th class="so">Xếp đúng mức</th></tr>
+{{bang_kc3}}
+</table>
+<p>Khi cách chấm sai lệch, TCI gỡ được một phần sai lệch và đưa hơn một nửa số sinh viên bị đẩy sai mức về đúng mức. Khi sinh viên giỏi thật, TCI giữ gần như toàn bộ phần tăng: hệ thống không "phạt" năng lực thật.</p>
+
+<!-- ============================ 5. HỆ THỐNG ============================ -->
+<h2>5. Sản phẩm, khả năng mở rộng và bảo mật</h2>
+<ul>
+  <li><b>Kiến trúc:</b> Python (pandas, SciPy, scikit-learn), mỗi giải pháp là một gói riêng (<code>cau_hinh</code>, <code>quy_trinh</code>, <code>kiem_chung</code>, <code>xuat</code>). Mọi ngưỡng nằm ở một chỗ và được ghi vào file tham số đi kèm kết quả. Seed cố định: cùng dữ liệu luôn ra cùng kết quả.</li>
+  <li><b>Dữ liệu lớn:</b> các phép tính theo cửa sổ năm dùng tổng cộng dồn (<i>n</i>, Σ<i>x</i>, Σ<i>x</i>²) thay vì lặp từng dòng. Thử trên bộ dữ liệu giả 105.989 dòng, 3.180 lớp (gấp gần 3 lần dữ liệu thật, đáp ứng yêu cầu n &gt; 10<sup>5</sup>), cả chuỗi GP1 → GP2 → GP3 chạy xong trong khoảng 66 giây trên một máy tính cá nhân.</li>
+  <li><b>Dashboard (Streamlit), hai vai trò:</b> <i>Công khai</i> chỉ thấy số liệu tổng hợp, nhóm dưới 5 sinh viên hiện "&lt;5", không có bảng từng lớp; <i>Nhà trường</i> (có mật khẩu) xem danh sách lớp kèm lý do, tra cứu sinh viên kèm lời giải thích, tải file điểm mới (phân tích riêng hoặc gộp), xem lịch sử các lần phân tích và tải báo cáo HTML/ZIP. Biểu đồ Trước/Sau có ở mọi trang.</li>
+  <li><b>Tích hợp Smart Campus:</b> đầu vào là một file CSV 19 cột theo đúng định dạng của Ban tổ chức; đầu ra là các bảng CSV (xếp hạng lớp, điểm hiệu chỉnh, phân loại sinh viên) nên nhập được vào hệ thống quản lý đào tạo. Có hướng dẫn và file bấm đúp cho người không biết lập trình.</li>
+  <li><b>Bảo mật dữ liệu:</b> dữ liệu và kết quả nằm trong thư mục bị loại khỏi Git; một module kiểm tra riêng tư chặn mọi bảng còn Mã SV hoặc có nhóm dưới 5 người trước khi xuất; bản demo công khai chỉ dùng dữ liệu giả sinh ngẫu nhiên.</li>
+</ul>
+
+<h2>6. Hạn chế và hướng phát triển</h2>
+<ul>
+  <li><b>Độ nhạy thấp khi chỉ KTTX bị chấm rộng tay</b> ({{kc1_kttx_rong}} trong mô phỏng). Hướng phát triển: dùng điểm Thi làm "neo" và so phân phối KTTX riêng, thay vì chỉ qua HP.</li>
+  <li><b>TCI chỉ gỡ được một phần sai lệch,</b> vì hệ thống ưu tiên không sửa oan. Nhà trường có thể nới các ngưỡng trong file cấu hình nếu muốn hiệu chỉnh mạnh hơn.</li>
+  <li><b>Cờ <code>REVIEW_REQUIRED</code> ({{pt_review}} lượt điểm) gần với mức kỳ vọng do ngẫu nhiên</b> của khoảng tin cậy 95%: ở mức từng sinh viên, dữ liệu (trung vị 3 môn) chưa đủ để tách điểm bất thường khỏi dao động bình thường. Cờ này chỉ nên dùng làm danh sách tham khảo.</li>
+  <li><b>Năng lực nền bị giới hạn bởi số môn của mỗi sinh viên.</b> Khi có thêm điểm đầu vào hoặc điểm các khoa khác, chỉ cần bổ sung vào bước tính năng lực nền, các bước sau giữ nguyên.</li>
+</ul>
+
+<!-- ============================ PHỤ LỤC AI ============================ -->
+<h2 class="trang-moi">Phụ lục A. Kê khai ứng dụng AI</h2>
+<p>Phụ lục này kê khai việc sử dụng công cụ AI theo Mục 3.4 thể lệ cuộc thi. Đội sử dụng AI như một <b>trợ lý lập trình và rà soát</b>, trong khuôn khổ quy trình làm việc do đội thiết lập: bài toán, hướng tiếp cận, các quyết định phương pháp và việc nghiệm thu kết quả do đội đảm nhận.</p>
+
+<h3>A.1. Công cụ sử dụng</h3>
+<table>
+<tr><th style="width:22%">Công cụ</th><th style="width:26%">Mô hình</th><th>Phạm vi sử dụng</th></tr>
+<tr><td>Claude Code (Anthropic)</td><td>Claude Opus 5.5, Claude Fable 5.2</td><td>Hỗ trợ hiện thực hóa mã nguồn theo đặc tả của đội, viết kiểm thử, rà soát mã độc lập, hỗ trợ trình bày tài liệu. Không có công cụ AI nào khác được sử dụng.</td></tr>
+</table>
+
+<h3>A.2. Nguyên tắc sử dụng và bảo vệ dữ liệu</h3>
+<ul>
+  <li><b>Không đưa dữ liệu điểm vào công cụ AI.</b> Công cụ AI chỉ được tiếp cận tài liệu mô tả dữ liệu, từ điển cột và các báo cáo số liệu tổng hợp đã qua bộ kiểm tra riêng tư (không có Mã SV, nhóm dưới 5 người bị ẩn). Mọi tính toán trên dữ liệu thật được chạy cục bộ trên máy của đội.</li>
+  <li><b>Sản phẩm không phụ thuộc AI khi vận hành.</b> Lời giải thích cho từng lớp và từng sinh viên được sinh bằng mẫu câu xác định, không gọi dịch vụ AI bên ngoài.</li>
+  <li><b>Đội ra quyết định, AI hỗ trợ thực hiện.</b> Mọi thay đổi mã nguồn đi qua pull request và do đội xem xét, hợp nhất.</li>
+</ul>
+
+<h3>A.3. Nội dung sử dụng theo giai đoạn</h3>
+<table>
+<tr><th style="width:14%">Giai đoạn</th><th style="width:27%">Nội dung yêu cầu (tóm tắt prompt)</th><th style="width:27%">Hỗ trợ từ công cụ AI</th><th>Phần việc và quyết định của đội</th></tr>
+<tr><td>Phân tích đề và dữ liệu (06/11)</td><td>Hệ thống hóa yêu cầu đầu ra của đề; tóm tắt tài liệu mô tả dữ liệu và từ điển cột</td><td>Lập bản tóm tắt yêu cầu và danh mục kiến thức thống kê liên quan</td><td>Đối chiếu với nguyên văn đề; xác định phạm vi và kế hoạch thực hiện</td></tr>
+<tr><td>Khám phá dữ liệu (06–08/11)</td><td>Hiện thực module EDA theo các giả thuyết đội đặt ra; xây dựng module kiểm tra riêng tư; thiết kế bộ kiểm thử cài lỗi cho 19 cột</td><td>Viết mã EDA, module riêng tư, bộ sinh dữ liệu giả và bộ kiểm thử</td><td>Đặt ba giả thuyết nghiên cứu; tự chạy phân tích trên dữ liệu thật; diễn giải kết quả và rút ra định hướng thiết kế; nghiệm thu bộ kiểm thử (43/43)</td></tr>
+<tr><td>Giải pháp 1 (09/11)</td><td>Rà soát bản thiết kế GP1 của thành viên đội; hoàn thiện theo các quyết định phương pháp của đội</td><td>Chỉ ra các điểm chưa nhất quán; hỗ trợ hoàn thiện mã và kịch bản mô phỏng</td><td>Thành viên đội xây dựng mô hình gốc (năng lực nền leave-one-class-out, Anomaly Score kết hợp Isolation Forest); đội chốt nguyên tắc "lệch + bằng chứng", cách chọn mốc, xử lý lớp nhỏ; tự kiểm chứng độc lập trên bản sao riêng</td></tr>
+<tr><td>Giải pháp 2, 3 và dashboard (09–17/11)</td><td>Hiện thực phương án hiệu chỉnh A + C và chỉ số TCI theo đặc tả; xây dựng dashboard phân quyền</td><td>Đề xuất các phương án kỹ thuật để đội so sánh; hiện thực mã nguồn và giao diện</td><td>Lựa chọn phương án A + C; cung cấp bảng quy đổi điểm NEU; quyết định tính đồ án, không co rút TCI, cơ chế phân quyền và yêu cầu giao diện</td></tr>
+<tr><td>Rà soát chất lượng (17/11)</td><td>Rà soát độc lập toàn bộ mã nguồn, không chỉnh sửa</td><td>Dùng một mô hình khác để rà soát chéo, báo cáo các điểm cần xem xét</td><td>Đánh giá từng phát hiện; quyết định cách xử lý (bằng chứng E2 phải đúng chiều với ngưỡng 1,0 điểm; không tính lượt vắng thi vào GPA/TCI)</td></tr>
+<tr><td>Báo cáo (17/11)</td><td>Tổng hợp số liệu và biểu đồ từ kết quả đã chạy; dàn trang báo cáo</td><td>Viết script tổng hợp số liệu, vẽ biểu đồ, hỗ trợ trình bày bản thảo</td><td>Xác định cấu trúc và nội dung; biên tập và duyệt bản cuối</td></tr>
+</table>
+
+<h3>A.4. Kiểm soát chất lượng</h3>
+<p>Đội không chấp nhận kết quả từ công cụ AI khi chưa kiểm chứng: (1) mỗi giải pháp có kiểm chứng mô phỏng với đáp án biết trước (Mục 2.7, 3.3, 4.4); (2) mã nguồn được rà soát chéo bằng một mô hình độc lập trước khi chốt kết quả; (3) mọi thay đổi được xem xét qua pull request trước khi hợp nhất. Nhật ký sử dụng AI chi tiết (ngày, mô hình, nội dung yêu cầu, kết quả sử dụng) được đội lưu giữ và sẵn sàng cung cấp khi Ban tổ chức yêu cầu. Đội chịu trách nhiệm toàn bộ về nội dung, phương pháp và kết quả trình bày trong báo cáo.</p>
+
+</section>
+</body>
+</html>

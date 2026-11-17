@@ -1,8 +1,10 @@
 # Dữ liệu BTC – KHÔNG đưa lên GitHub (điều kiện sử dụng dữ liệu)
 01_du-lieu/
 
-# Nhật ký AI – chỉ giữ trên máy, không đưa lên GitHub
+# Nhật ký AI và hướng dẫn cho Claude – chỉ giữ trên máy, không đưa lên GitHub
 06_quan-ly/nhat-ky-AI.md
+CLAUDE.md
+.claude/
 
 # Môi trường Python và file tạm
 .venv/
@@ -12,3 +14,9 @@ __pycache__/
 # Video demo nặng – nộp riêng qua cổng của BTC
 05_video-demo/*.mp4
 05_video-demo/*.mov
+
+# Báo cáo PDF sinh ra từ số liệu thật – chỉ giữ trên máy
+04_bao-cao/*.pdf
+04_bao-cao/bao_cao.html
+04_bao-cao/hinh/
+04_bao-cao/so_lieu.json

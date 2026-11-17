@@ -3,3 +3,5 @@ pandas>=2.3.3      # xử lý bảng dữ liệu
 numpy>=2.3.4       # tính toán số
 matplotlib>=3.10.7 # vẽ biểu đồ
 scipy>=1.16.3      # kiểm định thống kê (t-test, Wilcoxon, Spearman)
+scikit-learn>=1.7  # Giải pháp 1: Isolation Forest (kiểm tra chéo bằng học máy)
+streamlit>=1.50    # Giải pháp 3: dashboard (kèm altair để vẽ biểu đồ)

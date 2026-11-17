@@ -68,7 +68,9 @@ DINH_DANG = {
     COT_NHOM_MON: r"N[1-8]",                # N1…N8
     COT_MA_LOP: r"L\d{4}",                  # L0001
     COT_MA_SV: r"S\d{5}",                   # S00001
-    COT_KHOA_SV: r"K(5[89]|6[0-7])",        # K58…K67
+    # K50…K67. Mô tả BTC ghi K58–K67, nhưng dữ liệu có SV khóa cũ (K54, K56, K57) chỉ xuất hiện
+    # trong 2019-2020 → 2021-2022: SV học lại/ra trường muộn, hợp lệ (đội đã kiểm tra 17/11/2026).
+    COT_KHOA_SV: r"K(5\d|6[0-7])",
     COT_KHOA: r"KH\d{2}|KH-khác",           # KH01… hoặc KH-khác
     COT_TRONG_SO: r"\d+/\d+/\d+",           # 10/20/70
 }
