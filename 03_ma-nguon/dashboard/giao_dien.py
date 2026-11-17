@@ -6,7 +6,7 @@ Không tải phông chữ hay tài nguyên từ Internet: dashboard chạy đư�
 
 from __future__ import annotations
 
-import html
+import html  # noqa: F401 – app.py dùng gd.html.escape
 
 import altair as alt
 import pandas as pd
